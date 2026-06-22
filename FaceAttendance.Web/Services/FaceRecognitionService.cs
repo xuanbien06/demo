@@ -36,8 +36,8 @@ namespace FaceAttendance.Web.Services
             // 3. Đọc dữ liệu JSON (Response) Python trả về
             var jsonResponse = await response.Content.ReadAsStringAsync();
 
-            // 4. Giải mã JSON (Parse JSON) để lấy ra mảng 512 con số
-            using var document = JsonDocument.Parse(jsonResponse);
+            
+            using var document = System.Text.Json.JsonDocument.Parse(jsonResponse);
             var root = document.RootElement;
 
             if (root.GetProperty("status").GetString() == "success")
@@ -45,7 +45,6 @@ namespace FaceAttendance.Web.Services
                 var vectorElement = root.GetProperty("vector");
                 var vectorList = new List<float>();
 
-                // Chuyển mảng JSON thành List<float> của C#
                 foreach (var item in vectorElement.EnumerateArray())
                 {
                     vectorList.Add((float)item.GetDouble());

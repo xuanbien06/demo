@@ -224,3 +224,4 @@ D:\DoAnTotNghiep\FaceAttendance.Web\obj\Debug\net10.0\FaceAttendance.Web.pdb
 D:\DoAnTotNghiep\FaceAttendance.Web\obj\Debug\net10.0\FaceAttendance.Web.genruntimeconfig.cache
 D:\DoAnTotNghiep\FaceAttendance.Web\obj\Debug\net10.0\ref\FaceAttendance.Web.dll
 D:\DoAnTotNghiep\FaceAttendance.Web\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+D:\DoAnTotNghiep\FaceAttendance.Web\obj\Debug\net10.0\FaceAttendance.Web.sourcelink.json

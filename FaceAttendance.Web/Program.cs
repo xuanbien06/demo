@@ -40,7 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // Đăng ký HttpClient để C# có thể gọi API ngoại bộ
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<FaceRecognitionService>();
 
 var app = builder.Build();
 
