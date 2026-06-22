@@ -1,0 +1,49 @@
+﻿@using FaceAttendance.Web.Models
+@model IEnumerable<Student>
+@{
+    ViewData["Title"] = "Quản lý Sinh viên";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="m-0">Danh sách Sinh viên</h5>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Thêm Sinh viên</button>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Mã SV</th>
+                    <th>Họ và Tên</th>
+                    <th>Email</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.StudentID</td>
+                        <td>@item.FullName</td>
+                        <td>@item.Email</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">Đang học</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Bảo lưu</span>
+                            }
+                        </td>
+                        <td>
+                            <button class="btn btn-warning btn-sm"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

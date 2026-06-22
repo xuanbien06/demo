@@ -1,0 +1,40 @@
+﻿@model FaceAttendance.Web.Models.Student
+
+@{
+    ViewData["Title"] = "Thêm Sinh Viên Mới";
+}
+
+<div class="card shadow-sm w-50 mx-auto">
+    <div class="card-header bg-primary text-white">
+        <h5 class="m-0"><i class="fa-solid fa-user-plus"></i> Đăng ký thông tin và khuôn mặt</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Create" asp-controller="Student" method="post" enctype="multipart/form-data">
+
+            <div class="mb-3">
+                <label class="form-label">Mã Sinh Viên</label>
+                <input type="text" class="form-control" name="StudentID" required placeholder="VD: SV001" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Họ và Tên</label>
+                <input type="text" class="form-control" name="FullName" required placeholder="VD: Lại Xuân Biển" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="Email" required placeholder="bien@example.com" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ảnh khuôn mặt (Dùng cho AI)</label>
+                <input type="file" class="form-control" name="faceImage" accept="image/*" required />
+                <div class="form-text text-muted">Vui lòng chọn ảnh chụp thẳng, rõ mặt, không đeo kính râm.</div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">
+                <i class="fa-solid fa-floppy-disk"></i> Lưu Sinh Viên & Trích Xuất AI
+            </button>
+        </form>
+    </div>
+</div>
