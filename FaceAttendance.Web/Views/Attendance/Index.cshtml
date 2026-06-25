@@ -10,7 +10,7 @@
                 <button id="btnStartCamera" class="btn btn-success btn-sm">Mở Camera</button>
             </div>
             <div class="card-body text-center bg-light">
-                <video id="videoElement" autoplay playsinline style="width: 100%; max-height: 480px; border-radius: 8px; background: #000;"></video>
+                <video id="videoElement" autoplay playsinline style="width: 100%; max-height: 480px; border-radius: 8px; background: #000; transform: scaleX(-1);"></video>
 
                 <canvas id="canvasElement" style="display:none;"></canvas>
             </div>
@@ -80,18 +80,30 @@
 
                 const result = await response.json();
 
-                // 3. Nếu Server trả về success = true (Nhận diện ra người)
+                // Giới hạn chỉ hiện 5 kết quả mới nhất để không bị tràn màn hình
+                if (resultsDiv.children.length > 5) {
+                    resultsDiv.removeChild(resultsDiv.lastChild);
+                }
+
+                // Nếu nhận diện thành công (Màu xanh)
                 if (result.success) {
-                    // Tạo một đoạn HTML nhỏ hiển thị tên người vừa được điểm danh
                     const logHtml = `
                         <div class="alert alert-success py-2 mb-2">
                             <i class="fa-solid fa-check-circle"></i>
                             <strong>${result.studentName}</strong>
-                            <span class="float-end text-muted small">${new Date().toLocaleTimeString()}</span>
+                            <span class="badge bg-success float-end">${result.percent}%</span>
                         </div>
                     `;
-                    // Nhét lên đầu danh sách kết quả
                     resultsDiv.insertAdjacentHTML('afterbegin', logHtml);
+                }
+                // Nếu thất bại hoặc người lạ (Màu vàng)
+                else {
+                    const errHtml = `
+                        <div class="alert alert-warning py-1 mb-2 opacity-75 small">
+                            <i class="fa-solid fa-user-secret"></i> Nhận diện: ${result.message}
+                        </div>
+                    `;
+                    resultsDiv.insertAdjacentHTML('afterbegin', errHtml);
                 }
             } catch (err) {
                 console.error("Lỗi gửi ảnh lên Server", err);

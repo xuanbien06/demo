@@ -28,38 +28,39 @@ namespace FaceAttendance.Web.Controllers
         {
             try
             {
-                // 1. Cắt bỏ tiền tố "data:image/jpeg;base64," của chuỗi ảnh Javascript gửi lên
                 string base64Data = request.Base64Image.Substring(request.Base64Image.IndexOf(",") + 1);
                 byte[] imageBytes = Convert.FromBase64String(base64Data);
 
-                // Chuyển byte thành file ảnh ảo để gửi sang Python
                 using var stream = new MemoryStream(imageBytes);
                 var formFile = new FormFile(stream, 0, imageBytes.Length, "file", "webcam_frame.jpg");
 
-                // 2. Gửi ảnh sang Python API và nhận về Vector 512 chiều
                 List<float> cameraVector = await _faceService.GetFaceEmbeddingAsync(formFile);
                 if (cameraVector == null)
                 {
-                    return Json(new { success = false, message = "Không tìm thấy khuôn mặt" });
+                    Console.WriteLine("[AI] Không tìm thấy khuôn mặt trong khung hình.");
+                    return Json(new { success = false, message = "Không thấy khuôn mặt" });
                 }
 
-                // 3. Lấy toàn bộ dữ liệu khuôn mặt đã đăng ký từ Database
                 var savedEmbeddings = await _context.FaceEmbeddings.Include(f => f.Student).ToListAsync();
 
-                string matchedStudentName = "Người lạ";
-                double maxSimilarity = 0;
-                double threshold = 0.80; // Ngưỡng giống nhau (80%)
+                if (savedEmbeddings.Count == 0)
+                {
+                    Console.WriteLine("[DB] CSDL trống! Chưa có ai đăng ký khuôn mặt.");
+                    return Json(new { success = false, message = "DB chưa có dữ liệu" });
+                }
 
-                // 4. Vòng lặp so sánh Vector Camera với từng Vector trong Database
+                string matchedStudentName = "Người lạ";
+                double maxSimilarity = -1;
+                double threshold = 0.55; // Đã hạ ngưỡng xuống 55% để phù hợp thực tế
+
                 foreach (var dbFace in savedEmbeddings)
                 {
-                    // Chuyển chuỗi JSON trong DB thành List<float>
                     var dbVector = System.Text.Json.JsonSerializer.Deserialize<List<float>>(dbFace.VectorData);
-
-                    // Gọi hàm tính toán Cosine Similarity
                     double similarity = CalculateCosineSimilarity(cameraVector, dbVector);
 
-                    // Tìm ra người có độ giống nhau cao nhất
+                    // IN RA CONSOLE ĐỂ EM THẤY AI ĐANG TÍNH TOÁN
+                    Console.WriteLine($"[AI] So sánh với {dbFace.Student.FullName} - Độ giống: {similarity * 100:0.00}%");
+
                     if (similarity > maxSimilarity)
                     {
                         maxSimilarity = similarity;
@@ -72,16 +73,19 @@ namespace FaceAttendance.Web.Controllers
 
                 if (maxSimilarity >= threshold)
                 {
-                    return Json(new { success = true, studentName = matchedStudentName });
+                    Console.WriteLine($"[AI] => NHẬN DIỆN THÀNH CÔNG: {matchedStudentName}");
+                    return Json(new { success = true, studentName = matchedStudentName, percent = Math.Round(maxSimilarity * 100, 2) });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "Không nhận diện được sinh viên này" });
+                    Console.WriteLine($"[AI] => THẤT BẠI: Người lạ (Chỉ giống {maxSimilarity * 100:0.00}%)");
+                    return Json(new { success = false, message = $"Giống {Math.Round(maxSimilarity * 100, 2)}%" });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                Console.WriteLine($"[LỖI C#] {ex.Message}");
+                return Json(new { success = false, message = "Lỗi C#: " + ex.Message });
             }
         }
 
