@@ -7,7 +7,17 @@
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="m-0">Danh sách Sinh viên</h5>
-        <a href="/Student/Create" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Thêm Sinh viên</a>
+        <div>
+            <a href="/Report/ExportExcel" class="btn btn-success btn-sm me-2">
+                <i class="fa-solid fa-file-excel"></i> Xuất Excel
+            </a>
+            <a href="/Report/ExportPdf" class="btn btn-danger btn-sm me-2">
+                <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+            </a>
+            <a href="/Student/Create" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Thêm Sinh viên
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <table class="table table-bordered table-striped table-hover">
@@ -38,8 +48,14 @@
                             }
                         </td>
                         <td>
-                            <button class="btn btn-warning btn-sm"><i class="fa-solid fa-pen"></i></button>
-                            <button class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                            <a href="/Student/Edit/@item.StudentID" class="btn btn-warning btn-sm" title="Sửa thông tin">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+
+                            <a href="/Student/Delete/@item.StudentID" class="btn btn-danger btn-sm" title="Xóa sinh viên"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa sinh viên @item.FullName không? Dữ liệu khuôn mặt cũng sẽ bị xóa vĩnh viễn!');">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
                         </td>
                     </tr>
                 }

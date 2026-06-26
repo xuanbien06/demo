@@ -1,0 +1,52 @@
+﻿@model FaceAttendance.Web.Models.Student
+
+@{
+    ViewData["Title"] = "Chỉnh sửa Sinh Viên";
+}
+
+<div class="card shadow-sm w-50 mx-auto">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="m-0"><i class="fa-solid fa-pen-to-square"></i> Cập nhật thông tin & Khuôn mặt</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" asp-controller="Student" method="post" enctype="multipart/form-data">
+
+            <input type="hidden" name="oldStudentID" value="@Model.StudentID" />
+
+            <div class="mb-3">
+                <label class="form-label">Mã Sinh Viên</label>
+                <input type="text" class="form-control" name="StudentID" value="@Model.StudentID" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Họ và Tên</label>
+                <input type="text" class="form-control" name="FullName" value="@Model.FullName" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="Email" value="@Model.Email" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-danger">Cập nhật ảnh mặt mới (Bỏ trống nếu không muốn đổi)</label>
+                <input type="file" class="form-control" name="faceImage" accept="image/*" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Trạng thái học tập</label>
+                <select class="form-select" name="IsActive">
+                    <option value="true" selected="@(Model.IsActive ? "selected" : null)">Đang học</option>
+                    <option value="false" selected="@(!Model.IsActive ? "selected" : null)">Bảo lưu / Đã nghỉ</option>
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="/Student/Index" class="btn btn-secondary">Quay lại</a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

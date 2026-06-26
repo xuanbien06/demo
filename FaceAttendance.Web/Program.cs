@@ -42,6 +42,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Đăng ký HttpClient để C# có thể gọi API ngoại bộ
 builder.Services.AddHttpClient<FaceRecognitionService>();
 
+// Đăng ký Service gửi mail thông thường
+builder.Services.AddScoped<EmailService>();
+
+// Đăng ký con Bot chạy ngầm (AddHostedService)
+builder.Services.AddHostedService<AttendanceWarningJob>();
+
 var app = builder.Build();
 
 // Cấu hình Middleware Pipeline

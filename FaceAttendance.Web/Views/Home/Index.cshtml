@@ -1,24 +1,105 @@
 ﻿@{
-    // Khai báo tiêu đề trang, biến này sẽ được truyền lên _Layout.cshtml
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Tổng quan Hệ thống";
 }
 
 <div class="row">
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
         <div class="card text-white bg-primary shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title">Tổng Sinh Viên</h5>
-                <h2 class="mb-0">1,245 <i class="fa-solid fa-users float-end opacity-50"></i></h2>
+                <h2 class="mb-0">@ViewBag.TotalStudents <i class="fa-solid fa-users float-end opacity-50"></i></h2>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
         <div class="card text-white bg-success shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Lớp Đang Dạy</h5>
-                <h2 class="mb-0">8 <i class="fa-solid fa-book float-end opacity-50"></i></h2>
+                <h5 class="card-title">Đang Học</h5>
+                <h2 class="mb-0">@ViewBag.ActiveStudents <i class="fa-solid fa-user-check float-end opacity-50"></i></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-secondary shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Bảo Lưu / Nghỉ</h5>
+                <h2 class="mb-0">@ViewBag.InactiveStudents <i class="fa-solid fa-user-minus float-end opacity-50"></i></h2>
             </div>
         </div>
     </div>
 </div>
+
+<div class="row mt-3">
+    <div class="col-md-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="m-0 text-primary"><i class="fa-solid fa-chart-pie"></i> Tỉ lệ Trạng thái Sinh viên</h5>
+            </div>
+            <div class="card-body d-flex justify-content-center">
+                <canvas id="statusChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="m-0 text-success"><i class="fa-solid fa-chart-column"></i> Thống kê Chuyên cần (Tuần này)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // 1. VẼ BIỂU ĐỒ TRÒN (Trạng thái Sinh viên)
+        // Lấy dữ liệu từ C# đưa trực tiếp vào Javascript
+        let activeCount = @ViewBag.ActiveStudents;
+        let inactiveCount = @ViewBag.InactiveStudents;
+
+        const ctxPie = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctxPie, {
+        type: 'pie', // Loại biểu đồ tròn
+        data: {
+        labels: ['Đang học', 'Bảo lưu'],
+        datasets: [{
+        data: [activeCount, inactiveCount],
+        backgroundColor: ['#198754', '#6c757d'] // Màu xanh lá và màu xám
+        }]
+        }
+        });
+
+        // 2. VẼ BIỂU ĐỒ CỘT (Thống kê chuyên cần giả lập)
+        const ctxBar = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(ctxBar, {
+        type: 'bar', // Loại biểu đồ cột
+        data: {
+        labels: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'],
+        datasets: [
+        {
+        label: 'Có mặt',
+        data: [45, 42, 44, 40, 43, 38], // Số liệu mẫu
+        backgroundColor: '#0d6efd' // Màu xanh dương
+        },
+        {
+        label: 'Vắng mặt',
+        data: [2, 5, 3, 7, 4, 9], // Số liệu mẫu
+        backgroundColor: '#dc3545' // Màu đỏ
+        }
+        ]
+        },
+        options: {
+        scales: {
+        y: { beginAtZero: true } // Cột Y bắt đầu từ số 0
+        }
+        }
+        });
+    </script>
+}
