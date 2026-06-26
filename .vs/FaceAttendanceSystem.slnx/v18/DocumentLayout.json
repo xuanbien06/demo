@@ -3,8 +3,40 @@
   "WorkspaceRootPath": "D:\\DoAnTotNghiep\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\views\\attendance\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\views\\attendance\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\services\\facerecognitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\services\\facerecognitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\controllers\\studentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\controllers\\studentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\models\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\models\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\models\\attendancesession.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\models\\attendancesession.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\models\\studentclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\models\\studentclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\models\\attendancerecord.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\models\\attendancerecord.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\views\\student\\edit.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -43,10 +75,6 @@
       "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\controllers\\reportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\services\\facerecognitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\services\\facerecognitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\models\\faceembedding.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\models\\faceembedding.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -55,24 +83,12 @@
       "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\views\\attendance\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\views\\attendance\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\views\\student\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\views\\student\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|solutionrelative:faceattendance.web\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{ADE4D672-0F47-006D-7E67-9693D706AEBB}|FaceAttendance.Web\\FaceAttendance.Web.csproj|d:\\doantotnghiep\\faceattendance.web\\repositories\\istudentrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -106,37 +122,134 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Class.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\Class.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\Class.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\Class.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Models\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-26T17:22:13.285Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Data\\AppDbContext.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Data\\AppDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-19T02:18:34.963Z"
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "Edit.cshtml",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
-              "RelativeToolTip": "FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
-              "ViewState": "AgIAAB0AAAAAAAAAAAAowDMAAAAGAAAAAAAAAA==",
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
+              "RelativeToolTip": "FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
+              "ViewState": "AgIAAFcAAAAAAAAAAAAAABUAAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-26T17:01:47.501Z",
+              "WhenOpened": "2026-06-19T03:32:08.33Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "StudentController.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\StudentController.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Controllers\\StudentController.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\StudentController.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Controllers\\StudentController.cs",
+              "ViewState": "AgIAAK0AAAAAAAAAAAAowL8AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-19T03:21:28.752Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "FaceRecognitionService.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAgwEAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-19T03:09:18.251Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AttendanceController.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\AttendanceController.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Controllers\\AttendanceController.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\AttendanceController.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Controllers\\AttendanceController.cs",
+              "ViewState": "AgIAAD0AAAAAAAAAAAAowE0AAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-19T03:30:50.944Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 7,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Home\\Index.cshtml",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Home\\Index.cshtml",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Home\\Index.cshtml",
-              "RelativeToolTip": "FaceAttendance.Web\\Views\\Home\\Index.cshtml",
-              "ViewState": "AgIAAFIAAAAAAAAAAAAowGgAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-19T03:20:32.821Z",
-              "EditorCaption": ""
+              "Title": "StudentClass.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\StudentClass.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\StudentClass.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\StudentClass.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Models\\StudentClass.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-26T17:22:44.443Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 6,
+              "Title": "AttendanceSession.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\AttendanceSession.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\AttendanceSession.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\AttendanceSession.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Models\\AttendanceSession.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-26T17:23:03.278Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AttendanceRecord.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\AttendanceRecord.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\AttendanceRecord.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\AttendanceRecord.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Models\\AttendanceRecord.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-26T17:23:19.288Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Program.cs",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Program.cs",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Program.cs",
+              "RelativeToolTip": "FaceAttendance.Web\\Program.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAADQAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-19T02:23:02.834Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
               "Title": "_Layout.cshtml",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Shared\\_Layout.cshtml",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Shared\\_Layout.cshtml",
@@ -148,33 +261,31 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Program.cs",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Program.cs",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Program.cs",
-              "RelativeToolTip": "FaceAttendance.Web\\Program.cs",
-              "ViewState": "AgIAACEAAAAAAAAAAAAAADQAAAAfAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-19T02:23:02.834Z",
-              "EditorCaption": ""
+              "DocumentIndex": 15,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Home\\Index.cshtml",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Home\\Index.cshtml",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Home\\Index.cshtml",
+              "RelativeToolTip": "FaceAttendance.Web\\Views\\Home\\Index.cshtml",
+              "ViewState": "AgIAAFIAAAAAAAAAAAAowGgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-19T03:20:32.821Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Edit.cshtml",
+              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
+              "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
+              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
+              "RelativeToolTip": "FaceAttendance.Web\\Views\\Student\\Edit.cshtml",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAowDMAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-26T17:01:47.501Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 10,
-              "Title": "FaceRecognitionService.cs",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
-              "RelativeToolTip": "FaceAttendance.Web\\Services\\FaceRecognitionService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACYAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-19T03:09:18.251Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": "Index.cshtml",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Student\\Index.cshtml",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Student\\Index.cshtml",
@@ -182,25 +293,11 @@
               "RelativeToolTip": "FaceAttendance.Web\\Views\\Student\\Index.cshtml",
               "ViewState": "AgIAACUAAAAAAAAAAAAUwDUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-19T03:22:13.7Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-19T03:22:13.7Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "StudentController.cs",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\StudentController.cs",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Controllers\\StudentController.cs",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\StudentController.cs",
-              "RelativeToolTip": "FaceAttendance.Web\\Controllers\\StudentController.cs",
-              "ViewState": "AgIAAKMAAAAAAAAAAAAowL8AAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-19T03:21:28.752Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 17,
               "Title": "ReportController.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\ReportController.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Controllers\\ReportController.cs",
@@ -208,12 +305,11 @@
               "RelativeToolTip": "FaceAttendance.Web\\Controllers\\ReportController.cs",
               "ViewState": "AgIAAJQAAAAAAAAAAAAowKcAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-26T16:22:32.454Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-26T16:22:32.454Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 13,
               "Title": "EmailService.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\EmailService.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Services\\EmailService.cs",
@@ -221,12 +317,11 @@
               "RelativeToolTip": "FaceAttendance.Web\\Services\\EmailService.cs",
               "ViewState": "AgIAABgAAAAAAAAAAAAowC4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-26T16:46:24.916Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-26T16:46:24.916Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 12,
               "Title": "AttendanceWarningJob.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\AttendanceWarningJob.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Services\\AttendanceWarningJob.cs",
@@ -234,24 +329,11 @@
               "RelativeToolTip": "FaceAttendance.Web\\Services\\AttendanceWarningJob.cs",
               "ViewState": "AgIAADQAAAAAAAAAAAAowEoAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-26T16:47:00.596Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-26T16:47:00.596Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
-              "RelativeToolTip": "FaceAttendance.Web\\Views\\Attendance\\Index.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAACrAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-19T03:32:08.33Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 14,
               "Title": "appsettings.json",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\appsettings.json",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\appsettings.json",
@@ -259,12 +341,11 @@
               "RelativeToolTip": "FaceAttendance.Web\\appsettings.json",
               "ViewState": "AgIAAAQAAAAAAAAAAAAiwBUAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-19T02:19:02.444Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-19T02:19:02.444Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 16,
               "Title": "HomeController.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\HomeController.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Controllers\\HomeController.cs",
@@ -272,12 +353,11 @@
               "RelativeToolTip": "FaceAttendance.Web\\Controllers\\HomeController.cs",
               "ViewState": "AgIAAB4AAAAAAAAAAAAYwCkAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-26T16:33:28.306Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-26T16:33:28.306Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 19,
               "Title": "ErrorViewModel.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\ErrorViewModel.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\ErrorViewModel.cs",
@@ -289,7 +369,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 18,
               "Title": "FaceEmbedding.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\FaceEmbedding.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\FaceEmbedding.cs",
@@ -301,19 +381,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "AttendanceController.cs",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\AttendanceController.cs",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Controllers\\AttendanceController.cs",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Controllers\\AttendanceController.cs",
-              "RelativeToolTip": "FaceAttendance.Web\\Controllers\\AttendanceController.cs",
-              "ViewState": "AgIAAEgAAAAAAAAAAAAQwFgAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-19T03:30:50.944Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 21,
               "Title": "Create.cshtml",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Views\\Student\\Create.cshtml",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Views\\Student\\Create.cshtml",
@@ -325,19 +393,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "AppDbContext.cs",
-              "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Data\\AppDbContext.cs",
-              "RelativeDocumentMoniker": "FaceAttendance.Web\\Data\\AppDbContext.cs",
-              "ToolTip": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Data\\AppDbContext.cs",
-              "RelativeToolTip": "FaceAttendance.Web\\Data\\AppDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-19T02:18:34.963Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 22,
               "Title": "IStudentRepository.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Repositories\\IStudentRepository.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Repositories\\IStudentRepository.cs",
@@ -349,7 +405,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 25,
               "Title": "User.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\User.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\User.cs",
@@ -361,7 +417,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 24,
               "Title": "StudentService.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\StudentService.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Services\\StudentService.cs",
@@ -373,7 +429,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 23,
               "Title": "Student.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Models\\Student.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Models\\Student.cs",
@@ -385,7 +441,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 26,
               "Title": "StudentRepository.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Repositories\\StudentRepository.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Repositories\\StudentRepository.cs",
@@ -397,7 +453,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 23,
+              "DocumentIndex": 27,
               "Title": "IStudentService.cs",
               "DocumentMoniker": "D:\\DoAnTotNghiep\\FaceAttendance.Web\\Services\\IStudentService.cs",
               "RelativeDocumentMoniker": "FaceAttendance.Web\\Services\\IStudentService.cs",

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FaceAttendance.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2e83510a4d317bdbb02209ca96ab8a648da07d5d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1486053b3c54e8c0b1bac8422e10c12f909240fa")]
 [assembly: System.Reflection.AssemblyProductAttribute("FaceAttendance.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FaceAttendance.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -36,45 +36,51 @@ namespace FaceAttendance.Web.Controllers
 
         // 3. Xử lý dữ liệu khi bấm nút Submit trên Form
         [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> Create(Student student, IFormFile faceImage)
         {
             try
             {
                 // BƯỚC A: LƯU THÔNG TIN CƠ BẢN
                 student.IsActive = true;
-                _context.Students.Add(student); // Thêm sinh viên vào DB
-                await _context.SaveChangesAsync(); // Lưu xuống SQL Server
+                _context.Students.Add(student);
+                await _context.SaveChangesAsync();
 
                 // BƯỚC B: XỬ LÝ ẢNH & AI
                 if (faceImage != null && faceImage.Length > 0)
                 {
-                    // Gửi ảnh sang Python API (chạy ở cổng 8000)
-                    List<float> vector = await _faceService.GetFaceEmbeddingAsync(faceImage);
+                    // SỬA LỖI Ở ĐÂY: Gọi hàm GetMultipleFaceEmbeddingsAsync (trả về nhiều mặt)
+                    List<List<float>> vectors = await _faceService.GetMultipleFaceEmbeddingsAsync(faceImage);
 
-                    if (vector != null)
+                    // Kiểm tra xem có tìm thấy ít nhất 1 khuôn mặt nào không
+                    if (vectors != null && vectors.Count > 0)
                     {
-                        // Hàm JsonSerializer biến List<float> thành chuỗi text ngoặc vuông "[0.1, -0.5, ...]"
+                        // CHỈ LẤY KHUÔN MẶT ĐẦU TIÊN TÌM THẤY (Vì đây là đăng ký cho 1 sinh viên)
+                        List<float> vector = vectors[0];
+
                         string vectorJson = System.Text.Json.JsonSerializer.Serialize(vector);
 
-                        // Tạo đối tượng FaceEmbedding mới
                         var embeddingRecord = new FaceEmbedding
                         {
-                            StudentID = student.StudentID, // Nối với sinh viên vừa tạo ở trên
+                            StudentID = student.StudentID,
                             VectorData = vectorJson,
                             CreatedAt = DateTime.Now
                         };
 
-                        _context.FaceEmbeddings.Add(embeddingRecord); // Thêm khuôn mặt vào DB
-                        await _context.SaveChangesAsync(); // Lưu xuống SQL Server
+                        _context.FaceEmbeddings.Add(embeddingRecord);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // (Tùy chọn) Có thể báo lỗi nếu đăng ký mà ảnh không có mặt
+                        Console.WriteLine("Cảnh báo: Ảnh đăng ký không nhận diện được khuôn mặt.");
                     }
                 }
 
-                // Nếu thành công, điều hướng quay lại trang Danh sách (Index)
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                // Nếu lỗi (mất mạng, Python sập, lỗi SQL...) thì báo ra màn hình
                 ModelState.AddModelError("", "Đã xảy ra lỗi: " + ex.Message);
                 return View(student);
             }
@@ -153,10 +159,14 @@ namespace FaceAttendance.Web.Controllers
                 // ===============================================
                 if (faceImage != null && faceImage.Length > 0)
                 {
-                    // Gửi ảnh mới sang Python tính toán
-                    List<float> newVector = await _faceService.GetFaceEmbeddingAsync(faceImage);
-                    if (newVector != null)
+                    // SỬA LỖI Ở ĐÂY: Gọi hàm mới
+                    List<List<float>> newVectors = await _faceService.GetMultipleFaceEmbeddingsAsync(faceImage);
+
+                    if (newVectors != null && newVectors.Count > 0)
                     {
+                        // LẤY KHUÔN MẶT ĐẦU TIÊN
+                        List<float> newVector = newVectors[0];
+
                         string vectorJson = System.Text.Json.JsonSerializer.Serialize(newVector);
                         var currentFace = await _context.FaceEmbeddings.FirstOrDefaultAsync(f => f.StudentID == student.StudentID);
 

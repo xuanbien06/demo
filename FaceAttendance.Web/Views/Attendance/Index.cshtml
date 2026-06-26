@@ -2,6 +2,25 @@
     ViewData["Title"] = "Điểm Danh Bằng Camera";
 }
 
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label class="fw-bold">Chọn Lớp Đang Học:</label>
+                <select id="classIdSelect" class="form-select">
+                    <option value="0">-- Quét toàn bộ trường (Chế độ Test) --</option>
+                    <option value="1">Lớp IT01 - Lập trình Web</option>
+                    <option value="2">Lớp IT02 - Trí tuệ nhân tạo</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="fw-bold">Mã Phiên Điểm Danh:</label>
+                <input type="number" id="sessionIdSelect" class="form-control" value="1" />
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-8">
         <div class="card shadow-sm mb-4">
@@ -71,11 +90,17 @@
             const base64Image = canvas.toDataURL('image/jpeg');
 
             try {
-                // Bắn API Post lên Controller C#
-                const response = await fetch('/Attendance/Recognize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Base64Image: base64Image })
+                // Giả sử có 2 thẻ <select> hoặc Input ẩn lưu ID lớp và phiên điểm danh
+                let currentClassId = document.getElementById("classIdSelect").value;
+                let currentSessionId = document.getElementById("sessionIdSelect").value;
+
+                let currentClassId = classSelect ? classSelect.value : 0;
+                let currentSessionId = sessionSelect ? sessionSelect.value : 0;
+
+                fetch(`/Attendance/Recognize?classId=${currentClassId}&sessionId=${currentSessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Base64Image: imageData })
                 });
 
                 const result = await response.json();
