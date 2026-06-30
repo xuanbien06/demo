@@ -18,8 +18,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // 3. Đăng ký Dependency Injection (Rất quan trọng - Hội đồng thường hỏi)
 // "AddScoped" nghĩa là: Mỗi khi có request gửi lên web, nó sẽ tạo mới 1 đối tượng, xong request thì hủy.
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<FaceAttendance.Web.Repositories.IStudentRepository, FaceAttendance.Web.Repositories.StudentRepository>();
+builder.Services.AddScoped<FaceAttendance.Web.Services.IStudentService, FaceAttendance.Web.Services.StudentService>();
+builder.Services.AddScoped<FaceAttendance.Web.Repositories.IFaceEmbeddingRepository, FaceAttendance.Web.Repositories.FaceEmbeddingRepository>();
+builder.Services.AddScoped<FaceAttendance.Web.Services.IAttendanceService, FaceAttendance.Web.Services.AttendanceService>();
 
 // 4. Cấu hình bảo mật JWT
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -39,8 +41,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Đăng ký HttpClient để C# có thể gọi API ngoại bộ
-builder.Services.AddHttpClient<FaceRecognitionService>();
+// Đăng ký HttpClient và đọc địa chỉ AI từ file cấu hình appsettings.json
+builder.Services.AddHttpClient<FaceRecognitionService>(client =>
+{
+    var aiUrl = builder.Configuration["AiApiSettings:BaseUrl"];
+    client.BaseAddress = new Uri(aiUrl!);
+});
 
 // Đăng ký Service gửi mail thông thường
 builder.Services.AddScoped<EmailService>();

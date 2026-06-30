@@ -1,0 +1,12 @@
+# .NET Core / Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.slnx.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
