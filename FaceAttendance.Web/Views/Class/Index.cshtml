@@ -1,0 +1,84 @@
+﻿@model IEnumerable<FaceAttendance.Web.Models.Class>
+
+@{
+    ViewData["Title"] = "Quản lý Lớp học";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Danh sách Lớp học</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> + Thêm lớp
+        </a>
+    </div>
+
+    <form asp-action="Index" method="get" class="mb-4">
+        <div class="input-group w-50">
+            <input type="text" name="searchString" class="form-control" placeholder="Tìm kiếm theo tên lớp..." value="@ViewBag.SearchString">
+            <button class="btn btn-outline-secondary" type="submit">Tìm kiếm</button>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchString))
+            {
+                <a asp-action="Index" class="btn btn-outline-danger">Xóa lọc</a>
+            }
+        </div>
+    </form>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover table-bordered mb-0 align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th class="text-center" style="width: 5%">STT</th>
+                    <th style="width: 30%">Tên lớp</th>
+                    <th class="text-center" style="width: 15%">Số lượng SV</th>
+                    <th class="text-center" style="width: 20%">Ngày tạo</th>
+                    <th class="text-center" style="width: 30%">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Không tìm thấy dữ liệu lớp học nào.</td>
+                    </tr>
+                }
+                else
+                {
+                    int index = (ViewBag.CurrentPage - 1) * 10 + 1;
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold">@(index++)</td>
+                            <td class="fw-semibold">@item.ClassName</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark rounded-pill px-3">@item.ClassStudents.Count</span>
+                            </td>
+                            <td class="text-center">@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-center">
+                                <a asp-action="Details" asp-route-id="@item.ClassID" class="btn btn-sm btn-info text-white">Xem chi tiết</a>
+                                <a asp-action="Edit" asp-route-id="@item.ClassID" class="btn btn-sm btn-warning text-dark">Sửa</a>
+
+                                <form asp-action="Delete" asp-route-id="@item.ClassID" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lớp này? Mọi dữ liệu điểm danh của lớp sẽ bị xóa (Không xóa sinh viên).');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@ViewBag.SearchString">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>

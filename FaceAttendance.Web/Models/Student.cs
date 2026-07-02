@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FaceAttendance.Web.Models
@@ -18,7 +19,10 @@ namespace FaceAttendance.Web.Models
         [StringLength(100)]
         public string Email { get; set; }
 
-        // CHÚ Ý: BẮT BUỘC PHẢI CÓ DÒNG NÀY
         public bool IsActive { get; set; } = true;
+
+        // --- CODE MỚI THÊM VÀO BÊN DƯỚI ---
+        public ICollection<ClassStudent> ClassStudents { get; set; } = new List<ClassStudent>();
+        public ICollection<AttendanceRecord> AttendanceRecords { get; set; } = new List<AttendanceRecord>();
     }
 }
