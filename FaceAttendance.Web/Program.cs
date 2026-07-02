@@ -22,6 +22,8 @@ builder.Services.AddScoped<FaceAttendance.Web.Repositories.IStudentRepository, F
 builder.Services.AddScoped<FaceAttendance.Web.Services.IStudentService, FaceAttendance.Web.Services.StudentService>();
 builder.Services.AddScoped<FaceAttendance.Web.Repositories.IFaceEmbeddingRepository, FaceAttendance.Web.Repositories.FaceEmbeddingRepository>();
 builder.Services.AddScoped<FaceAttendance.Web.Services.IAttendanceService, FaceAttendance.Web.Services.AttendanceService>();
+// Đăng ký FaceCacheService như là một Singleton (Tồn tại duy nhất 1 bản sao trên RAM suốt vòng đời app)
+builder.Services.AddSingleton<FaceAttendance.Web.Services.FaceCacheService>();
 
 // 4. Cấu hình bảo mật JWT
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -72,5 +74,12 @@ app.UseAuthorization();  // 2. Mày được quyền làm gì? (Phân quyền)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// [Nạp dữ liệu AI siêu tốc vào RAM khi bật Server]
+using (var scope = app.Services.CreateScope())
+{
+    var cacheService = scope.ServiceProvider.GetRequiredService<FaceAttendance.Web.Services.FaceCacheService>();
+    await cacheService.LoadFacesIntoMemoryAsync();
+}
 
 app.Run();

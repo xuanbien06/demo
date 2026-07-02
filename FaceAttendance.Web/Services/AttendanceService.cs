@@ -1,77 +1,92 @@
-﻿using FaceAttendance.Web.Repositories;
+﻿// Đường dẫn: FaceAttendance.Web/Services/AttendanceService.cs
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http; // <-- ĐẢM BẢO CÓ DÒNG NÀY ĐỂ KHÔNG BỊ LỖI FormFile
+using FaceAttendance.Web.Repositories;
 
 namespace FaceAttendance.Web.Services
 {
     public class AttendanceService : IAttendanceService
     {
-        private readonly IFaceEmbeddingRepository _faceRepository;
+        private readonly FaceCacheService _cacheService;
         private readonly FaceRecognitionService _faceService;
 
-        public AttendanceService(IFaceEmbeddingRepository faceRepository, FaceRecognitionService faceService)
+        public AttendanceService(FaceCacheService cacheService, FaceRecognitionService faceService)
         {
-            _faceRepository = faceRepository;
+            _cacheService = cacheService;
             _faceService = faceService;
         }
 
-        public async Task<(bool Success, string Message, string StudentName, double Percent)> ProcessAttendanceAsync(string base64Image)
+        public async Task<List<FaceResultResponse>> ProcessAttendanceAsync(string base64Image)
         {
+            var finalResults = new List<FaceResultResponse>();
+
             try
             {
+                if (string.IsNullOrEmpty(base64Image) || !base64Image.Contains(","))
+                {
+                    return finalResults;
+                }
+
                 string base64Data = base64Image.Substring(base64Image.IndexOf(",") + 1);
                 byte[] imageBytes = Convert.FromBase64String(base64Data);
 
                 using var stream = new MemoryStream(imageBytes);
                 var formFile = new FormFile(stream, 0, imageBytes.Length, "file", "webcam_frame.jpg");
 
-                List<float> cameraVector = await _faceService.GetFaceEmbeddingAsync(formFile);
-                if (cameraVector == null)
+                // 1. Lấy danh sách khuôn mặt từ AI Python (Tọa độ + Vector)
+                var cameraFaces = await _faceService.GetFaceEmbeddingAsync(formFile);
+
+                if (cameraFaces == null || cameraFaces.Count == 0)
                 {
-                    return (false, "Không thấy khuôn mặt", string.Empty, 0);
+                    return finalResults;
                 }
 
-                var savedEmbeddings = await _faceRepository.GetAllWithStudentAsync();
+                // 2. Lấy dữ liệu khuôn mặt siêu tốc từ RAM Cache
+                var savedEmbeddings = _cacheService.CachedFaces;
 
-                if (savedEmbeddings.Count == 0)
+                // 3. Duyệt qua từng khuôn mặt xuất hiện trong camera
+                foreach (var camFace in cameraFaces)
                 {
-                    return (false, "DB chưa có dữ liệu", string.Empty, 0);
-                }
+                    string matchedStudentName = "Unknown";
+                    double maxSimilarity = -1;
+                    double threshold = 0.55;
 
-                string matchedStudentName = "Người lạ";
-                double maxSimilarity = -1;
-                double threshold = 0.55;
-
-                foreach (var dbFace in savedEmbeddings)
-                {
-                    var dbVector = System.Text.Json.JsonSerializer.Deserialize<List<float>>(dbFace.VectorData);
-                    double similarity = CalculateCosineSimilarity(cameraVector, dbVector);
-
-                    Console.WriteLine($"[AI] So sánh với {dbFace.Student.FullName} - Độ giống: {similarity * 100:0.00}%");
-
-                    if (similarity > maxSimilarity)
+                    // So sánh với từng khuôn mặt trong RAM Cache
+                    foreach (var dbFace in savedEmbeddings)
                     {
-                        maxSimilarity = similarity;
-                        if (maxSimilarity >= threshold)
+                        double similarity = CalculateCosineSimilarity(camFace.Vector, dbFace.Vector);
+
+                        if (similarity > maxSimilarity)
                         {
-                            matchedStudentName = dbFace.Student.FullName;
+                            maxSimilarity = similarity;
+                            if (maxSimilarity >= threshold)
+                            {
+                                matchedStudentName = dbFace.StudentName;
+                            }
                         }
                     }
+
+                    // 4. Đóng gói kết quả
+                    bool isSuccess = maxSimilarity >= threshold;
+                    finalResults.Add(new FaceResultResponse
+                    {
+                        Box = camFace.Box,
+                        StudentName = matchedStudentName,
+                        Percent = isSuccess ? Math.Round(maxSimilarity * 100, 2) : 0,
+                        Success = isSuccess
+                    });
                 }
 
-                if (maxSimilarity >= threshold)
-                {
-                    Console.WriteLine($"[AI] => NHẬN DIỆN THÀNH CÔNG: {matchedStudentName}");
-                    return (true, "Thành công", matchedStudentName, Math.Round(maxSimilarity * 100, 2));
-                }
-                else
-                {
-                    Console.WriteLine($"[AI] => THẤT BẠI: Người lạ (Chỉ giống {maxSimilarity * 100:0.00}%)");
-                    return (false, $"Giống {Math.Round(maxSimilarity * 100, 2)}%", string.Empty, 0);
-                }
+                return finalResults;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[LỖI C#] {ex.Message}");
-                return (false, "Lỗi C#: " + ex.Message, string.Empty, 0);
+                return finalResults;
             }
         }
 

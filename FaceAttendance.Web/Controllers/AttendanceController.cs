@@ -1,4 +1,5 @@
-﻿using FaceAttendance.Web.Services;
+﻿// Đường dẫn: FaceAttendance.Web/Controllers/AttendanceController.cs
+using FaceAttendance.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FaceAttendance.Web.Controllers
@@ -7,7 +8,6 @@ namespace FaceAttendance.Web.Controllers
     {
         private readonly IAttendanceService _attendanceService;
 
-        // Tiêm (Inject) Service vào Controller
         public AttendanceController(IAttendanceService attendanceService)
         {
             _attendanceService = attendanceService;
@@ -22,20 +22,16 @@ namespace FaceAttendance.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Recognize([FromBody] ImageRequest request)
         {
-            // Controller bây giờ chỉ làm 1 việc duy nhất: Gọi Service và Trả kết quả
-            var result = await _attendanceService.ProcessAttendanceAsync(request.Base64Image);
+            // Trả về một List danh sách các người đang đứng trước Camera kèm tọa độ
+            var facesResult = await _attendanceService.ProcessAttendanceAsync(request.Base64Image);
 
-            if (result.Success)
-            {
-                return Json(new { success = true, studentName = result.StudentName, percent = result.Percent });
-            }
-
-            return Json(new { success = false, message = result.Message });
+            // Gói vào JSON gửi xuống Javascript xử lý vẽ khung
+            return Json(new { success = true, faces = facesResult });
         }
     }
 
     public class ImageRequest
     {
-        public string Base64Image { get; set; }
+        public string Base64Image { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿// Đường dẫn: FaceAttendance.Web/Services/FaceRecognitionService.cs
+using System.Text.Json;
+using System.Linq;             // <-- THÊM DÒNG NÀY ĐỂ SỬA LỖI ĐỎ SELECT/TOARRAY
+using Microsoft.AspNetCore.Http; // <-- THÊM DÒNG NÀY ĐỂ NHẬN DIỆN IFormFile
 
 namespace FaceAttendance.Web.Services
 {
@@ -11,46 +14,45 @@ namespace FaceAttendance.Web.Services
             _httpClient = httpClient;
         }
 
-        // Hàm này nhận file ảnh từ giao diện, gửi sang Python, và nhận về Vector
-        public async Task<List<float>> GetFaceEmbeddingAsync(IFormFile imageFile)
+        // Đổi kiểu trả về: Hỗ trợ nhiều khuôn mặt, mỗi khuôn mặt có [Tọa độ Box, Vector]
+        public async Task<List<(int[] Box, List<float> Vector)>> GetFaceEmbeddingAsync(IFormFile imageFile)
         {
-            // 1. Chuyển file ảnh thành dạng MultipartFormData để gửi qua HTTP Request
             using var content = new MultipartFormDataContent();
             using var stream = imageFile.OpenReadStream();
             using var streamContent = new StreamContent(stream);
 
             content.Add(streamContent, "file", imageFile.FileName);
 
-            // 2. Bắn HTTP POST Request sang Python
             var response = await _httpClient.PostAsync("/api/extract-face", content);
 
             if (!response.IsSuccessStatusCode)
             {
-                // Nếu Python báo lỗi (không thấy mặt, ảnh hỏng...)
-                var errorResult = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Lỗi từ AI: {errorResult}");
+                return new List<(int[], List<float>)>(); // Không tìm thấy mặt thì trả về list rỗng
             }
 
-            // 3. Đọc dữ liệu JSON (Response) Python trả về
             var jsonResponse = await response.Content.ReadAsStringAsync();
-
-            
-            using var document = System.Text.Json.JsonDocument.Parse(jsonResponse);
+            using var document = JsonDocument.Parse(jsonResponse);
             var root = document.RootElement;
+
+            var resultList = new List<(int[] Box, List<float> Vector)>();
 
             if (root.GetProperty("status").GetString() == "success")
             {
-                var vectorElement = root.GetProperty("vector");
-                var vectorList = new List<float>();
-
-                foreach (var item in vectorElement.EnumerateArray())
+                // Parse mảng "faces" từ Python API
+                var facesElement = root.GetProperty("faces");
+                foreach (var face in facesElement.EnumerateArray())
                 {
-                    vectorList.Add((float)item.GetDouble());
+                    // Lấy Bounding Box [x, y, w, h]
+                    var boxArray = face.GetProperty("box").EnumerateArray().Select(x => x.GetInt32()).ToArray();
+
+                    // Lấy Vector
+                    var vectorArray = face.GetProperty("vector").EnumerateArray().Select(x => (float)x.GetDouble()).ToList();
+
+                    resultList.Add((boxArray, vectorArray));
                 }
-                return vectorList;
             }
 
-            return null;
+            return resultList;
         }
     }
 }

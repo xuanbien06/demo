@@ -1,72 +1,93 @@
 # Đường dẫn: D:\DoAnTotNghiep\FaceAttendance.AI\face_utils.py
 
-import cv2 # Thư viện OpenCV xử lý ảnh
-import numpy as np # Thư viện xử lý mảng số
-from mtcnn import MTCNN # Thư viện nhận diện vị trí khuôn mặt
-from keras_facenet import FaceNet # Thư viện trích xuất đặc trưng khuôn mặt
+import cv2
+import numpy as np
+from keras_facenet import FaceNet
+import time
+import os
+import urllib.request
 
-# 1. Khởi tạo 2 mô hình AI (Chỉ khởi tạo 1 lần cho nhẹ máy)
-detector = MTCNN() 
+# 1. Hàm tự động tải file AI của OpenCV (nếu chưa có)
+def load_opencv_dnn_model():
+    model_dir = "dnn_model"
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+        
+    prototxt_url = "https://raw.githubusercontent.com/opencv/opencv/master/samples/dnn/face_detector/deploy.prototxt"
+    model_url = "https://raw.githubusercontent.com/opencv/opencv_3rdparty/dnn_samples_face_detector_20170830/res10_300x300_ssd_iter_140000.caffemodel"
+    
+    prototxt_path = os.path.join(model_dir, "deploy.prototxt")
+    model_path = os.path.join(model_dir, "res10_300x300_ssd_iter_140000.caffemodel")
+    
+    if not os.path.exists(prototxt_path):
+        print("Đang tải file cấu trúc AI (deploy.prototxt)...")
+        urllib.request.urlretrieve(prototxt_url, prototxt_path)
+    if not os.path.exists(model_path):
+        print("Đang tải file trọng số AI (10MB)... Vui lòng đợi chút nhé...")
+        urllib.request.urlretrieve(model_url, model_path)
+        
+    # Nạp model vào OpenCV
+    net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
+    return net
+
+print("Đang khởi tạo model...")
 embedder = FaceNet()
+face_net = load_opencv_dnn_model()
 
 def test_webcam_and_embedding():
-    # 2. Bật Webcam (Số 0 là camera mặc định của laptop)
     cap = cv2.VideoCapture(0)
-    
     print("Đang mở Camera... Bấm phím 'q' trên bàn phím để thoát.")
+    
+    prev_time = 0
 
     while True:
-        # 3. Đọc từng khung hình từ video
         ret, frame = cap.read()
         if not ret:
             break
             
-        # 4. OpenCV đọc ảnh dạng BGR, nhưng AI cần ảnh dạng RGB. Ta phải chuyển đổi:
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w = frame.shape[:2]
         
-        # 5. Đưa ảnh cho MTCNN để tìm khuôn mặt
-        results = detector.detect_faces(rgb_frame)
+        # Bắt đầu tính thời gian AI
+        start_ai = time.time()
         
-        # Nếu tìm thấy ít nhất 1 khuôn mặt
-        if results:
-            for res in results:
-                # Lấy tọa độ góc trên bên trái (x,y) và chiều rộng, chiều cao (w,h)
-                x, y, w, h = res['box']
+        # 2. Xử lý ảnh cho OpenCV DNN
+        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+        face_net.setInput(blob)
+        detections = face_net.forward()
+        
+        # 3. Duyệt qua các khuôn mặt tìm được
+        for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+            
+            # Chỉ lấy các khuôn mặt có độ tin cậy > 60%
+            if confidence > 0.6:
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                (x, y, x1, y1) = box.astype("int")
                 
-                # 6. Vẽ khung chữ nhật màu xanh lá (0, 255, 0) bao quanh mặt
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                # Sửa lỗi tràn viền nếu khuôn mặt quá sát mép
+                x, y = max(0, x), max(0, y)
+                x1, y1 = min(w, x1), min(h, y1)
                 
-                # 7. Cắt đúng phần khuôn mặt ra khỏi ảnh lớn (Chú ý: y trước x sau trong ma trận ảnh)
-                face_crop = rgb_frame[y:y+h, x:x+w]
+                # Vẽ khung chữ nhật (Xanh lá)
+                cv2.rectangle(frame, (x, y), (x1, y1), (0, 255, 0), 2)
                 
-                # Bỏ qua nếu ảnh cắt bị lỗi (quá nhỏ hoặc lọt ra ngoài khung hình)
-                if face_crop.size == 0:
-                    continue
-                    
-                # 8. Ép kích thước khuôn mặt về chuẩn 160x160 pixel mà FaceNet yêu cầu
-                face_crop = cv2.resize(face_crop, (160, 160))
-                
-                # Thêm 1 chiều vào ma trận ảnh (từ 3D thành 4D) để đưa vào mạng Nơ-ron
-                face_crop = np.expand_dims(face_crop, axis=0)
-                
-                # 9. Đưa vào FaceNet để lấy mảng 512 con số
-                embeddings = embedder.embeddings(face_crop)
-                
-                # In ra độ dài của mảng để kiểm tra (chắc chắn sẽ in ra số 512)
-                cv2.putText(frame, f"Vector: {len(embeddings[0])} dims", (x, y-10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                ai_time = (time.time() - start_ai) * 1000
+                cv2.putText(frame, f"AI: {int(ai_time)}ms - {int(confidence*100)}%", (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-        # 10. Hiển thị khung hình lên màn hình
-        cv2.imshow("Test AI Face Recognition", frame)
+        # Tính FPS
+        curr_time = time.time()
+        fps = 1 / (curr_time - prev_time)
+        prev_time = curr_time
+        cv2.putText(frame, f"FPS: {int(fps)}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+        cv2.imshow("Test AI Face (OpenCV DNN)", frame)
         
-        # 11. Chờ 1ms, nếu người dùng bấm phím 'q' thì thoát vòng lặp
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
             
-    # 12. Dọn dẹp: Tắt camera và đóng cửa sổ
     cap.release()
     cv2.destroyAllWindows()
 
-# Dòng lệnh này để báo cho Python biết: Hãy chạy hàm test_webcam_and_embedding() ngay khi mở file này
 if __name__ == "__main__":
     test_webcam_and_embedding()

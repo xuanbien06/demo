@@ -9,10 +9,10 @@
                 <h5 class="m-0"><i class="fa-solid fa-video text-danger"></i> Camera Lớp Học</h5>
                 <button id="btnStartCamera" class="btn btn-success btn-sm">Mở Camera</button>
             </div>
-            <div class="card-body text-center bg-light">
-                <video id="videoElement" autoplay playsinline style="width: 100%; max-height: 480px; border-radius: 8px; background: #000; transform: scaleX(-1);"></video>
 
-                <canvas id="canvasElement" style="display:none;"></canvas>
+            <div class="card-body text-center bg-light" style="position: relative; padding: 0;">
+                <video id="videoElement" autoplay playsinline style="display: none;"></video>
+                <canvas id="displayCanvas" style="width: 100%; max-height: 480px; border-radius: 8px; background: #000;"></canvas>
             </div>
         </div>
     </div>
@@ -20,7 +20,7 @@
     <div class="col-md-4">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-primary text-white">
-                <h5 class="m-0"><i class="fa-solid fa-clipboard-check"></i> Kết Quả Nhận Diện</h5>
+                <h5 class="m-0"><i class="fa-solid fa-clipboard-check"></i> Kết Quả Điểm Danh</h5>
             </div>
             <div class="card-body" id="attendanceResults" style="overflow-y: auto; max-height: 480px;">
                 <p class="text-muted fst-italic">Đang chờ mở camera...</p>
@@ -32,46 +32,124 @@
 @section Scripts {
     <script>
         const video = document.getElementById('videoElement');
-        const canvas = document.getElementById('canvasElement');
+        const displayCanvas = document.getElementById('displayCanvas');
+        const displayCtx = displayCanvas.getContext('2d');
         const btnStart = document.getElementById('btnStartCamera');
         const resultsDiv = document.getElementById('attendanceResults');
-        let attendanceInterval;
 
-        // 1. Sự kiện khi bấm nút "Mở Camera"
+        let isRunning = false;
+
+        // CƠ CHẾ TRACKING VÀ LERP (LÀM MƯỢT SIÊU CẤP)
+        let trackedFaces = new Map();
+        let recognizedStudents = new Set();
+
+        // Hàm Nội suy tuyến tính (Lerp): Di chuyển giá trị mượt mà
+        function lerp(start, end, amt) {
+            return (1 - amt) * start + amt * end;
+        }
+
         btnStart.addEventListener('click', async () => {
+            if(isRunning) return;
+
             try {
-                // Xin quyền mở Webcam của trình duyệt
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
                 video.srcObject = stream;
 
-                btnStart.textContent = "Đang chạy AI...";
+                video.onloadedmetadata = () => {
+                    displayCanvas.width = video.videoWidth;
+                    displayCanvas.height = video.videoHeight;
+                };
+
+                btnStart.textContent = "Hệ Thống AI Đang Chạy...";
                 btnStart.classList.replace('btn-success', 'btn-warning');
                 btnStart.disabled = true;
-                resultsDiv.innerHTML = ""; // Xóa dòng chữ chờ
+                resultsDiv.innerHTML = "";
 
-                // Hẹn giờ: Cứ mỗi 3 giây (3000ms) thì gọi hàm chụp ảnh 1 lần
-                attendanceInterval = setInterval(captureAndSendFrame, 3000);
+                isRunning = true;
+
+                requestAnimationFrame(drawLoop);
+                sendFrameToAI();
 
             } catch (err) {
                 alert("Lỗi không thể mở Camera: " + err.message);
             }
         });
 
-        // 2. Hàm chụp ảnh và gửi lên Server bằng AJAX (Fetch API)
-        async function captureAndSendFrame() {
-            // Lấy kích thước thật của video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
+        // ----------------------------------------------------
+        // LUỒNG 1: VẼ GIAO DIỆN (60 FPS - SIÊU MƯỢT)
+        // ----------------------------------------------------
+        function drawLoop() {
+            if (!isRunning) return;
 
-            // Vẽ khung hình hiện tại từ thẻ <video> sang thẻ <canvas>
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 1. Vẽ khung hình video (Lật ngược như soi gương)
+            displayCtx.save();
+            displayCtx.translate(displayCanvas.width, 0);
+            displayCtx.scale(-1, 1);
+            displayCtx.drawImage(video, 0, 0, displayCanvas.width, displayCanvas.height);
+            displayCtx.restore();
 
-            // Ép ảnh thành dạng chuỗi văn bản (Base64) để dễ dàng gửi qua mạng
-            const base64Image = canvas.toDataURL('image/jpeg');
+            const now = Date.now();
+
+            // 2. Vẽ và làm mượt các Box
+            for (let [id, face] of trackedFaces.entries()) {
+                // Xóa Box nếu quá 1 giây AI không thấy người này nữa
+                if (now - face.lastSeen > 1000) {
+                    trackedFaces.delete(id);
+                    continue;
+                }
+
+                // [LÕI LÀM MƯỢT] Biến smoothFactor = 0.15 tối ưu cho YuNet
+                const smoothFactor = 0.15;
+                face.currentBox[0] = lerp(face.currentBox[0], face.targetBox[0], smoothFactor);
+                face.currentBox[1] = lerp(face.currentBox[1], face.targetBox[1], smoothFactor);
+                face.currentBox[2] = lerp(face.currentBox[2], face.targetBox[2], smoothFactor);
+                face.currentBox[3] = lerp(face.currentBox[3], face.targetBox[3], smoothFactor);
+
+                const cBox = face.currentBox;
+
+                // Lật tọa độ X cho khớp với việc lật Video
+                const x = displayCanvas.width - cBox[0] - cBox[2];
+                const y = cBox[1];
+                const w = cBox[2];
+                const h = cBox[3];
+
+                const color = face.success ? "#00FF00" : "#FF0000";
+                const displayName = face.success ? face.studentName : "Unknown";
+
+                // Vẽ Bounding Box
+                displayCtx.beginPath();
+                displayCtx.rect(x, y, w, h);
+                displayCtx.lineWidth = 3;
+                displayCtx.strokeStyle = color;
+                displayCtx.stroke();
+
+                // Vẽ khung nền cho Label Text
+                displayCtx.fillStyle = color;
+                displayCtx.fillRect(x, y - 30, w, 30);
+
+                // Vẽ Text tên người
+                displayCtx.fillStyle = "#000000";
+                displayCtx.font = "bold 16px Arial";
+                displayCtx.fillText(displayName, x + 5, y - 8);
+            }
+
+            requestAnimationFrame(drawLoop);
+        }
+
+        // ----------------------------------------------------
+        // LUỒNG 2: GIAO TIẾP AI ĐỘC LẬP
+        // ----------------------------------------------------
+        async function sendFrameToAI() {
+            if (!isRunning) return;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            tempCanvas.getContext('2d').drawImage(video, 0, 0);
+
+            const base64Image = tempCanvas.toDataURL('image/jpeg', 0.8);
 
             try {
-                // Bắn API Post lên Controller C#
                 const response = await fetch('/Attendance/Recognize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -79,35 +157,73 @@
                 });
 
                 const result = await response.json();
+                const now = Date.now();
 
-                // Giới hạn chỉ hiện 5 kết quả mới nhất để không bị tràn màn hình
-                if (resultsDiv.children.length > 5) {
-                    resultsDiv.removeChild(resultsDiv.lastChild);
-                }
+                if (result.success && result.faces) {
+                    result.faces.forEach(newFace => {
+                        let bestMatchId = null;
+                        let minDistance = Infinity;
 
-                // Nếu nhận diện thành công (Màu xanh)
-                if (result.success) {
-                    const logHtml = `
-                        <div class="alert alert-success py-2 mb-2">
-                            <i class="fa-solid fa-check-circle"></i>
-                            <strong>${result.studentName}</strong>
-                            <span class="badge bg-success float-end">${result.percent}%</span>
-                        </div>
-                    `;
-                    resultsDiv.insertAdjacentHTML('afterbegin', logHtml);
-                }
-                // Nếu thất bại hoặc người lạ (Màu vàng)
-                else {
-                    const errHtml = `
-                        <div class="alert alert-warning py-1 mb-2 opacity-75 small">
-                            <i class="fa-solid fa-user-secret"></i> Nhận diện: ${result.message}
-                        </div>
-                    `;
-                    resultsDiv.insertAdjacentHTML('afterbegin', errHtml);
+                        // Thuật toán bám đuổi khuôn mặt
+                        for (let [id, tFace] of trackedFaces.entries()) {
+                            let cx1 = newFace.box[0] + newFace.box[2] / 2;
+                            let cy1 = newFace.box[1] + newFace.box[3] / 2;
+                            let cx2 = tFace.targetBox[0] + tFace.targetBox[2] / 2;
+                            let cy2 = tFace.targetBox[1] + tFace.targetBox[3] / 2;
+                            let dist = Math.hypot(cx1 - cx2, cy1 - cy2);
+
+                            // Đã nới lỏng khoảng cách lên 250px để chống mất khung khi di chuyển
+                            if (dist < minDistance && dist < 250) {
+                                minDistance = dist;
+                                bestMatchId = id;
+                            }
+                        }
+
+                        if (bestMatchId) {
+                            // Cập nhật điểm đến mới cho khung trượt theo
+                            let tFace = trackedFaces.get(bestMatchId);
+                            tFace.targetBox = newFace.box;
+                            tFace.studentName = newFace.studentName;
+                            tFace.success = newFace.success;
+                            tFace.lastSeen = now;
+                        } else {
+                            // Người mới xuất hiện
+                            let newId = Math.random().toString(36).substring(7);
+                            trackedFaces.set(newId, {
+                                currentBox: [...newFace.box],
+                                targetBox: [...newFace.box],
+                                studentName: newFace.studentName,
+                                success: newFace.success,
+                                lastSeen: now
+                            });
+                        }
+
+                        // Xử lý in log (Không in trùng lặp)
+                        if (newFace.success && !recognizedStudents.has(newFace.studentName)) {
+                            recognizedStudents.add(newFace.studentName);
+
+                            const logHtml = `
+                                <div class="alert alert-success py-2 mb-2 shadow-sm">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                    <strong>${newFace.studentName}</strong>
+                                </div>
+                            `;
+                            resultsDiv.insertAdjacentHTML('afterbegin', logHtml);
+
+                            if (resultsDiv.children.length > 15) {
+                                resultsDiv.removeChild(resultsDiv.lastChild);
+                            }
+
+                            setTimeout(() => { recognizedStudents.delete(newFace.studentName); }, 10000);
+                        }
+                    });
                 }
             } catch (err) {
                 console.error("Lỗi gửi ảnh lên Server", err);
             }
+
+            // Gọi AI liên tục mỗi 150ms
+            setTimeout(sendFrameToAI, 150);
         }
     </script>
 }
