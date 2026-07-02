@@ -18,5 +18,7 @@ namespace FaceAttendance.Web.Models
         // Navigation properties
         public ICollection<ClassStudent> ClassStudents { get; set; } = new List<ClassStudent>();
         public ICollection<AttendanceSession> AttendanceSessions { get; set; } = new List<AttendanceSession>();
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

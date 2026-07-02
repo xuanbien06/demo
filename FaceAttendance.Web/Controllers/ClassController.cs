@@ -1,7 +1,9 @@
 ﻿using FaceAttendance.Web.Data;
-using FaceAttendance.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FaceAttendance.Web.Controllers
 {
@@ -17,7 +19,7 @@ namespace FaceAttendance.Web.Controllers
         // YÊU CẦU 1: Giao diện danh sách lớp (Có tìm kiếm, phân trang)
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
-            int pageSize = 10; // Số lượng hiển thị trên 1 trang
+            int pageSize = 10;
             var query = _context.Classes.Include(c => c.ClassStudents).AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
@@ -47,7 +49,8 @@ namespace FaceAttendance.Web.Controllers
         // YÊU CẦU 2: Xử lý lưu lớp mới (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClassName")] Class newClass)
+        // ĐÃ SỬA: Gọi thẳng đường dẫn tuyệt đối FaceAttendance.Web.Models.Class
+        public async Task<IActionResult> Create([Bind("ClassName")] FaceAttendance.Web.Models.Class newClass)
         {
             if (ModelState.IsValid)
             {
@@ -81,7 +84,8 @@ namespace FaceAttendance.Web.Controllers
         // YÊU CẦU 3: Xử lý lưu sửa lớp (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClassID,ClassName,CreatedAt")] Class classObj)
+        // ĐÃ SỬA: Gọi thẳng đường dẫn tuyệt đối FaceAttendance.Web.Models.Class
+        public async Task<IActionResult> Edit(int id, [Bind("ClassID,ClassName,CreatedAt")] FaceAttendance.Web.Models.Class classObj)
         {
             if (id != classObj.ClassID) return NotFound();
 
