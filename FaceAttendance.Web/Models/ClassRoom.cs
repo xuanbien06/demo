@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FaceAttendance.Web.Models
 {
-    public class Class
+    [Table("ClassRooms")] // ĐÃ SỬA TỪ "Classes" THÀNH "ClassRooms"
+    public class ClassRoom
     {
         [Key]
         public int ClassID { get; set; }
@@ -15,10 +17,7 @@ namespace FaceAttendance.Web.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // Navigation properties
         public ICollection<ClassStudent> ClassStudents { get; set; } = new List<ClassStudent>();
         public ICollection<AttendanceSession> AttendanceSessions { get; set; } = new List<AttendanceSession>();
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

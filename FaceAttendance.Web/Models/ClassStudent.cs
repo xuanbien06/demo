@@ -6,7 +6,7 @@ namespace FaceAttendance.Web.Models
     {
         public int ClassID { get; set; }
         [ForeignKey("ClassID")]
-        public Class Class { get; set; } = null!;
+        public ClassRoom ClassRoom { get; set; } = null!; // ĐÃ SỬA
 
         [Column(TypeName = "varchar(20)")]
         public string StudentID { get; set; } = string.Empty;

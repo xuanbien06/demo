@@ -54,7 +54,7 @@ builder.Services.AddHttpClient<FaceRecognitionService>(client =>
 builder.Services.AddScoped<EmailService>();
 
 // Đăng ký con Bot chạy ngầm (AddHostedService)
-builder.Services.AddHostedService<AttendanceWarningJob>();
+//builder.Services.AddHostedService<AttendanceWarningJob>();
 
 var app = builder.Build();
 

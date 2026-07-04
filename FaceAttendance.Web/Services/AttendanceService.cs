@@ -1,110 +1,98 @@
-﻿// Đường dẫn: FaceAttendance.Web/Services/AttendanceService.cs
+﻿using FaceAttendance.Web.Data;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http; // <-- ĐẢM BẢO CÓ DÒNG NÀY ĐỂ KHÔNG BỊ LỖI FormFile
-using FaceAttendance.Web.Repositories;
 
 namespace FaceAttendance.Web.Services
 {
     public class AttendanceService : IAttendanceService
     {
-        private readonly FaceCacheService _cacheService;
-        private readonly FaceRecognitionService _faceService;
+        private readonly FaceRecognitionService _faceApi;
+        private readonly FaceCacheService _faceCache;
+        private readonly AppDbContext _context; // Dùng để truy vấn Database
 
-        public AttendanceService(FaceCacheService cacheService, FaceRecognitionService faceService)
+        public AttendanceService(FaceRecognitionService faceApi, FaceCacheService faceCache, AppDbContext context)
         {
-            _cacheService = cacheService;
-            _faceService = faceService;
+            _faceApi = faceApi;
+            _faceCache = faceCache;
+            _context = context;
         }
 
-        public async Task<List<FaceResultResponse>> ProcessAttendanceAsync(string base64Image)
+        public async Task<List<FaceResultResponse>> ProcessAttendanceAsync(string base64Image, int classId)
         {
-            var finalResults = new List<FaceResultResponse>();
+            var resultList = new List<FaceResultResponse>();
 
-            try
+            // 1. Convert Base64 thành file ảnh đẩy qua Python
+            var bytes = Convert.FromBase64String(base64Image.Split(',')[1]);
+            using var stream = new MemoryStream(bytes);
+            var formFile = new FormFile(stream, 0, bytes.Length, "file", "frame.jpg")
             {
-                if (string.IsNullOrEmpty(base64Image) || !base64Image.Contains(","))
+                Headers = new HeaderDictionary(),
+                ContentType = "image/jpeg"
+            };
+
+            // 2. Nhận kết quả Bounding Box và Vector từ AI
+            var aiFaces = await _faceApi.GetFaceEmbeddingAsync(formFile);
+
+            // 3. Lấy danh sách ID sinh viên CHỈ THUỘC LỚP ĐANG CHỌN (Yêu cầu 8)
+            var studentIdsInClass = await _context.ClassStudents
+                .Where(cs => cs.ClassID == classId)
+                .Select(cs => cs.StudentID)
+                .ToListAsync();
+
+            // 4. So khớp khuôn mặt
+            foreach (var (box, vector) in aiFaces)
+            {
+                var (bestMatchId, distance) = _faceCache.FindBestMatch(vector);
+
+                // Tính % tự tin cho đẹp
+                double percent = Math.Round(Math.Max(0, 1 - distance) * 100, 2);
+
+                if (bestMatchId != null && distance < 0.6) // Ngưỡng 0.6 của FaceNet
                 {
-                    return finalResults;
-                }
-
-                string base64Data = base64Image.Substring(base64Image.IndexOf(",") + 1);
-                byte[] imageBytes = Convert.FromBase64String(base64Data);
-
-                using var stream = new MemoryStream(imageBytes);
-                var formFile = new FormFile(stream, 0, imageBytes.Length, "file", "webcam_frame.jpg");
-
-                // 1. Lấy danh sách khuôn mặt từ AI Python (Tọa độ + Vector)
-                var cameraFaces = await _faceService.GetFaceEmbeddingAsync(formFile);
-
-                if (cameraFaces == null || cameraFaces.Count == 0)
-                {
-                    return finalResults;
-                }
-
-                // 2. Lấy dữ liệu khuôn mặt siêu tốc từ RAM Cache
-                var savedEmbeddings = _cacheService.CachedFaces;
-
-                // 3. Duyệt qua từng khuôn mặt xuất hiện trong camera
-                foreach (var camFace in cameraFaces)
-                {
-                    string matchedStudentName = "Unknown";
-                    double maxSimilarity = -1;
-                    double threshold = 0.55;
-
-                    // So sánh với từng khuôn mặt trong RAM Cache
-                    foreach (var dbFace in savedEmbeddings)
+                    // KIỂM TRA BẢO MẬT: Sinh viên này có học lớp hiện tại không?
+                    if (studentIdsInClass.Contains(bestMatchId))
                     {
-                        double similarity = CalculateCosineSimilarity(camFace.Vector, dbFace.Vector);
-
-                        if (similarity > maxSimilarity)
+                        var student = await _context.Students.FindAsync(bestMatchId);
+                        resultList.Add(new FaceResultResponse
                         {
-                            maxSimilarity = similarity;
-                            if (maxSimilarity >= threshold)
-                            {
-                                matchedStudentName = dbFace.StudentName;
-                            }
-                        }
+                            Box = box,
+                            StudentId = student?.StudentID, // <-- BỔ SUNG DÒNG NÀY
+                            StudentName = student?.FullName ?? "Unknown",
+                            Percent = percent,
+                            Success = true
+                        });
                     }
-
-                    // 4. Đóng gói kết quả
-                    bool isSuccess = maxSimilarity >= threshold;
-                    finalResults.Add(new FaceResultResponse
+                    else
                     {
-                        Box = camFace.Box,
-                        StudentName = matchedStudentName,
-                        Percent = isSuccess ? Math.Round(maxSimilarity * 100, 2) : 0,
-                        Success = isSuccess
+                        // Nhận ra sinh viên trong DB nhưng đi nhầm lớp
+                        resultList.Add(new FaceResultResponse
+                        {
+                            Box = box,
+                            StudentName = "Unknown (Sai lớp)",
+                            Percent = percent,
+                            Success = false // Bật cờ false để vẽ khung đỏ
+                        });
+                    }
+                }
+                else
+                {
+                    // Người hoàn toàn lạ (Không có trong hệ thống)
+                    resultList.Add(new FaceResultResponse
+                    {
+                        Box = box,
+                        StudentName = "Unknown",
+                        Percent = 0,
+                        Success = false
                     });
                 }
-
-                return finalResults;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[LỖI C#] {ex.Message}");
-                return finalResults;
-            }
-        }
-
-        private double CalculateCosineSimilarity(List<float> vectorA, List<float> vectorB)
-        {
-            double dotProduct = 0.0;
-            double normA = 0.0;
-            double normB = 0.0;
-
-            for (int i = 0; i < vectorA.Count; i++)
-            {
-                dotProduct += vectorA[i] * vectorB[i];
-                normA += Math.Pow(vectorA[i], 2);
-                normB += Math.Pow(vectorB[i], 2);
             }
 
-            if (normA == 0 || normB == 0) return 0;
-            return dotProduct / (Math.Sqrt(normA) * Math.Sqrt(normB));
+            return resultList;
         }
     }
 }

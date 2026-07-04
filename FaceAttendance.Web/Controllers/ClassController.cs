@@ -1,4 +1,5 @@
 ﻿using FaceAttendance.Web.Data;
+using FaceAttendance.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,7 +17,6 @@ namespace FaceAttendance.Web.Controllers
             _context = context;
         }
 
-        // YÊU CẦU 1: Giao diện danh sách lớp (Có tìm kiếm, phân trang)
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
             int pageSize = 10;
@@ -40,21 +40,17 @@ namespace FaceAttendance.Web.Controllers
             return View(classes);
         }
 
-        // YÊU CẦU 2: Trang thêm lớp (GET)
         public IActionResult Create()
         {
             return View();
         }
 
-        // YÊU CẦU 2: Xử lý lưu lớp mới (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // ĐÃ SỬA: Gọi thẳng đường dẫn tuyệt đối FaceAttendance.Web.Models.Class
-        public async Task<IActionResult> Create([Bind("ClassName")] FaceAttendance.Web.Models.Class newClass)
+        public async Task<IActionResult> Create([Bind("ClassName")] ClassRoom newClass)
         {
             if (ModelState.IsValid)
             {
-                // Validate: Không được trùng tên lớp
                 bool isExist = await _context.Classes.AnyAsync(c => c.ClassName.ToLower() == newClass.ClassName.ToLower());
                 if (isExist)
                 {
@@ -70,7 +66,6 @@ namespace FaceAttendance.Web.Controllers
             return View(newClass);
         }
 
-        // YÊU CẦU 3: Trang sửa lớp (GET)
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -81,17 +76,14 @@ namespace FaceAttendance.Web.Controllers
             return View(classObj);
         }
 
-        // YÊU CẦU 3: Xử lý lưu sửa lớp (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // ĐÃ SỬA: Gọi thẳng đường dẫn tuyệt đối FaceAttendance.Web.Models.Class
-        public async Task<IActionResult> Edit(int id, [Bind("ClassID,ClassName,CreatedAt")] FaceAttendance.Web.Models.Class classObj)
+        public async Task<IActionResult> Edit(int id, [Bind("ClassID,ClassName,CreatedAt")] ClassRoom classObj)
         {
             if (id != classObj.ClassID) return NotFound();
 
             if (ModelState.IsValid)
             {
-                // Validate: Không được trùng tên lớp với lớp KHÁC
                 bool isExist = await _context.Classes.AnyAsync(c => c.ClassName.ToLower() == classObj.ClassName.ToLower() && c.ClassID != id);
                 if (isExist)
                 {
@@ -114,7 +106,6 @@ namespace FaceAttendance.Web.Controllers
             return View(classObj);
         }
 
-        // YÊU CẦU 3: Nút xóa (Xóa lớp và quan hệ, giữ nguyên sinh viên)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -126,12 +117,102 @@ namespace FaceAttendance.Web.Controllers
 
             if (classObj != null)
             {
-                // Xóa quan hệ trong bảng trung gian (Dữ liệu Student gốc không bị ảnh hưởng)
                 _context.ClassStudents.RemoveRange(classObj.ClassStudents);
                 _context.Classes.Remove(classObj);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // =========================================================
+        // YÊU CẦU 4: TRANG CHI TIẾT LỚP HỌC
+        // =========================================================
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            // Load thông tin lớp kèm theo danh sách sinh viên của lớp đó
+            var classObj = await _context.Classes
+                .Include(c => c.ClassStudents)
+                    .ThenInclude(cs => cs.Student) // Kết nối sang bảng Sinh viên
+                .FirstOrDefaultAsync(m => m.ClassID == id);
+
+            if (classObj == null) return NotFound();
+
+            return View(classObj);
+        }
+
+        // =========================================================
+        // YÊU CẦU 5: GIAO DIỆN THÊM SINH VIÊN VÀO LỚP (GET)
+        // =========================================================
+        public async Task<IActionResult> AddStudents(int id, string searchString)
+        {
+            var classObj = await _context.Classes.FindAsync(id);
+            if (classObj == null) return NotFound();
+
+            ViewBag.ClassID = classObj.ClassID;
+            ViewBag.ClassName = classObj.ClassName;
+
+            // 1. Lấy danh sách ID sinh viên ĐÃ CÓ trong lớp này (để loại trừ)
+            var existingStudentIds = await _context.ClassStudents
+                .Where(cs => cs.ClassID == id)
+                .Select(cs => cs.StudentID)
+                .ToListAsync();
+
+            // 2. Lấy danh sách sinh viên CHƯA CÓ trong lớp
+            var query = _context.Students.Where(s => !existingStudentIds.Contains(s.StudentID));
+
+            // 3. Xử lý tìm kiếm
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(s => s.StudentID.Contains(searchString) || s.FullName.Contains(searchString));
+                ViewBag.SearchString = searchString;
+            }
+
+            var availableStudents = await query.ToListAsync();
+            return View(availableStudents);
+        }
+
+        // =========================================================
+        // YÊU CẦU 5: XỬ LÝ LƯU SINH VIÊN ĐƯỢC CHỌN VÀO LỚP (POST)
+        // =========================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddStudents(int id, List<string> selectedStudents)
+        {
+            if (selectedStudents != null && selectedStudents.Any())
+            {
+                foreach (var studentId in selectedStudents)
+                {
+                    // Validate: Tránh trường hợp thêm trùng khóa
+                    bool exists = await _context.ClassStudents.AnyAsync(cs => cs.ClassID == id && cs.StudentID == studentId);
+                    if (!exists)
+                    {
+                        _context.ClassStudents.Add(new ClassStudent
+                        {
+                            ClassID = id,
+                            StudentID = studentId
+                        });
+                    }
+                }
+                await _context.SaveChangesAsync();
+            }
+            // Quay về trang Chi tiết lớp
+            return RedirectToAction(nameof(Details), new { id = id });
+        }
+
+        // Action phụ: Xóa sinh viên khỏi lớp
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveStudent(int classId, string studentId)
+        {
+            var record = await _context.ClassStudents.FirstOrDefaultAsync(x => x.ClassID == classId && x.StudentID == studentId);
+            if (record != null)
+            {
+                _context.ClassStudents.Remove(record);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Details), new { id = classId });
         }
 
         private bool ClassExists(int id)

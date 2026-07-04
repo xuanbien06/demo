@@ -1,0 +1,74 @@
+﻿@model FaceAttendance.Web.Models.ClassRoom
+
+@{
+    ViewData["Title"] = "Chi tiết Lớp học";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center bg-light">
+            <div>
+                <h3 class="text-primary mb-1 fw-bold">Lớp: @Model.ClassName</h3>
+                <span class="text-muted"><i class="fa-solid fa-calendar-alt"></i> Ngày tạo: @Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+                <span class="text-muted ms-3"><i class="fa-solid fa-users"></i> Sĩ số: <strong>@Model.ClassStudents.Count</strong> sinh viên</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="AddStudents" asp-route-id="@Model.ClassID" class="btn btn-success fw-bold shadow-sm">
+                    <i class="fa-solid fa-user-plus"></i> + Thêm sinh viên
+                </a>
+                <button class="btn btn-outline-success shadow-sm" onclick="alert('Tính năng xuất Excel sẽ được tích hợp ở Phase sau!')">
+                    <i class="fa-solid fa-file-excel"></i> Xuất Excel
+                </button>
+                <button class="btn btn-outline-danger shadow-sm" onclick="alert('Tính năng xuất PDF sẽ được tích hợp ở Phase sau!')">
+                    <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+                </button>
+                <a asp-action="Index" class="btn btn-secondary shadow-sm">Quay lại</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded bg-white p-3">
+        <h5 class="mb-3 text-secondary">Danh sách sinh viên trong lớp</h5>
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th class="text-center" style="width: 5%">STT</th>
+                    <th class="text-center" style="width: 15%">Mã SV</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th class="text-center" style="width: 10%">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.ClassStudents.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-danger py-4 fw-bold">
+                            Lớp học này hiện chưa có sinh viên nào. Vui lòng thêm sinh viên!
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    int index = 1;
+                    foreach (var item in Model.ClassStudents)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold">@(index++)</td>
+                            <td class="text-center text-primary fw-semibold">@item.Student.StudentID</td>
+                            <td class="fw-bold">@item.Student.FullName</td>
+                            <td>@item.Student.Email</td>
+                            <td class="text-center">
+                                <form asp-action="RemoveStudent" method="post" onsubmit="return confirm('Xóa sinh viên này khỏi lớp? (Chỉ xóa khỏi lớp, không xóa khỏi hệ thống)');">
+                                    <input type="hidden" name="classId" value="@Model.ClassID" />
+                                    <input type="hidden" name="studentId" value="@item.StudentID" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

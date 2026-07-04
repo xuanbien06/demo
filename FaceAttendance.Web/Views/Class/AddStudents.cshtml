@@ -1,0 +1,118 @@
+﻿@model IEnumerable<FaceAttendance.Web.Models.Student>
+
+@{
+    ViewData["Title"] = "Thêm Sinh viên vào lớp";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Thêm sinh viên vào lớp: <span class="text-primary">@ViewBag.ClassName</span></h4>
+        <a asp-action="Details" asp-route-id="@ViewBag.ClassID" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại lớp học
+        </a>
+    </div>
+
+    <form asp-action="AddStudents" method="get" class="mb-4">
+        <input type="hidden" name="id" value="@ViewBag.ClassID" />
+        <div class="input-group w-50">
+            <input type="text" name="searchString" class="form-control" placeholder="Tìm theo Mã SV hoặc Họ tên..." value="@ViewBag.SearchString">
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchString))
+            {
+                <a asp-action="AddStudents" asp-route-id="@ViewBag.ClassID" class="btn btn-outline-danger">Xóa lọc</a>
+            }
+        </div>
+    </form>
+
+    <form asp-action="AddStudents" method="post">
+        <input type="hidden" name="id" value="@ViewBag.ClassID" />
+
+        <div class="table-responsive shadow-sm bg-white p-3 rounded">
+            <div class="mb-3 d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Chọn tất cả</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Bỏ chọn tất cả</button>
+
+                <button type="submit" class="btn btn-sm btn-success ms-auto fw-bold" id="btnSubmit" disabled>
+                    <i class="fa-solid fa-plus"></i> Thêm vào lớp (<span id="selectedCount">0</span>)
+                </button>
+            </div>
+
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center" style="width: 5%">Chọn</th>
+                        <th class="text-center" style="width: 15%">Mã SV</th>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                Không có sinh viên nào để thêm (Tất cả sinh viên đều đã ở trong lớp này).
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="selectedStudents" value="@item.StudentID" class="form-check-input student-checkbox" style="width: 20px; height: 20px;" />
+                                </td>
+                                <td class="text-center fw-bold text-primary">@item.StudentID</td>
+                                <td class="fw-semibold">@item.FullName</td>
+                                <td>@item.Email</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Lấy các element
+            const selectAllBtn = document.getElementById('selectAll');
+            const deselectAllBtn = document.getElementById('deselectAll');
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            const btnSubmit = document.getElementById('btnSubmit');
+            const selectedCountSpan = document.getElementById('selectedCount');
+
+            // Hàm cập nhật số lượng và trạng thái nút Submit
+            function updateSelectedCount() {
+                const count = document.querySelectorAll('.student-checkbox:checked').length;
+                selectedCountSpan.textContent = count;
+
+                if (count > 0) {
+                    btnSubmit.removeAttribute('disabled');
+                } else {
+                    btnSubmit.setAttribute('disabled', 'disabled');
+                }
+            }
+
+            // Xử lý nút Chọn tất cả
+            selectAllBtn.addEventListener('click', function () {
+                checkboxes.forEach(cb => cb.checked = true);
+                updateSelectedCount();
+            });
+
+            // Xử lý nút Bỏ chọn tất cả
+            deselectAllBtn.addEventListener('click', function () {
+                checkboxes.forEach(cb => cb.checked = false);
+                updateSelectedCount();
+            });
+
+            // Xử lý khi tick tay vào từng ô checkbox
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedCount);
+            });
+        });
+    </script>
+}

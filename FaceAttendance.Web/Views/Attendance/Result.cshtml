@@ -1,0 +1,128 @@
+﻿@model FaceAttendance.Web.Models.AttendanceSession
+
+@{
+    ViewData["Title"] = "Kết Quả Điểm Danh";
+    // Phân loại 2 danh sách
+    var presents = Model.Records.Where(r => r.IsPresent).ToList();
+    var absents = Model.Records.Where(r => !r.IsPresent).ToList();
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left"></i> Trở về Camera</a>
+        <div>
+            <button class="btn btn-success fw-bold shadow-sm me-2" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+            <button class="btn btn-danger fw-bold shadow-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>
+        </div>
+    </div>
+
+    <div class="card shadow border-0" id="reportArea">
+        <div class="card-header bg-white text-center py-4 border-bottom-0">
+            <h2 class="text-primary fw-bold text-uppercase mb-2">BÁO CÁO ĐIỂM DANH LỚP HỌC</h2>
+            <h4 class="text-dark">Lớp: <span class="text-danger">@Model.ClassRoom.ClassName</span></h4>
+            <p class="text-muted fw-bold mb-0">Ngày ghi nhận: @Model.Date.ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+        <div class="card-body px-5">
+
+            <div class="row">
+                <div class="col-md-6 border-end">
+                    <h5 class="text-success fw-bold mb-3"><i class="fa-solid fa-user-check"></i> DANH SÁCH CÓ MẶT (@presents.Count)</h5>
+                    <table class="table table-bordered table-striped" id="tablePresent">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Mã SV</th>
+                                <th>Họ tên</th>
+                                <th>Giờ tới</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!presents.Any())
+                            {
+                                <tr><td colspan="3" class="text-center">Không có ai</td></tr>
+                            }
+                            @foreach (var p in presents)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@p.Student.StudentID</td>
+                                    <td>@p.Student.FullName</td>
+                                    <td class="text-center text-success fw-bold">@p.Time?.ToString("HH:mm:ss")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="text-danger fw-bold mb-3"><i class="fa-solid fa-user-xmark"></i> DANH SÁCH VẮNG MẶT (@absents.Count)</h5>
+                    <p class="text-muted small fst-italic">(Đã tự động gửi Email cảnh báo)</p>
+                    <table class="table table-bordered table-striped" id="tableAbsent">
+                        <thead class="table-danger">
+                            <tr>
+                                <th>Mã SV</th>
+                                <th>Họ tên</th>
+                                <th>Email nhận cảnh báo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!absents.Any())
+                            {
+                                <tr><td colspan="3" class="text-center">Lớp đi học đầy đủ</td></tr>
+                            }
+                            @foreach (var a in absents)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@a.Student.StudentID</td>
+                                    <td>@a.Student.FullName</td>
+                                    <td class="text-danger">@a.Student.Email</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tách riêng biến C# (Razor) sang biến Javascript để không bị lỗi cú pháp
+    var className = '@Model.ClassRoom.ClassName';
+    var dateStr = '@Model.Date.ToString("ddMMyyyy")';
+
+    // XUẤT EXCEL (Chia 2 Sheet Cực Đẹp)
+    function exportExcel() {
+    var wb = XLSX.utils.book_new();
+
+    // Lấy dữ liệu từ bảng
+    var wsPresent = XLSX.utils.table_to_sheet(document.getElementById('tablePresent'));
+    var wsAbsent = XLSX.utils.table_to_sheet(document.getElementById('tableAbsent'));
+
+    // Thêm vào 2 Sheet
+    XLSX.utils.book_append_sheet(wb, wsPresent, "Có Mặt");
+    XLSX.utils.book_append_sheet(wb, wsAbsent, "Vắng Mặt");
+
+    // Lưu file bằng chuỗi an toàn
+    var excelFileName = 'BaoCaoDiemDanh_' + className + '_' + dateStr + '.xlsx';
+    XLSX.writeFile(wb, excelFileName);
+    }
+
+    // XUẤT PDF CHUẨN A4
+    function exportPDF() {
+    var element = document.getElementById('reportArea');
+    var pdfFileName = 'BaoCao_' + className + '.pdf';
+
+    var opt = {
+    margin:       0.5,
+    filename:     pdfFileName,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } // Quay ngang giấy
+    };
+
+    html2pdf().set(opt).from(element).save();
+    }
+</script>
