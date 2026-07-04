@@ -4,60 +4,81 @@
     ViewData["Title"] = "Quản lý Sinh viên";
 }
 
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-10">
+                <input type="text" name="searchString" class="form-control"
+                       placeholder="Nhập Mã sinh viên hoặc Họ tên (VD: BIT240041, Nguyễn Văn A, Lại Xuân Biển...)"
+                       value="@ViewBag.SearchString" />
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="m-0">Danh sách Sinh viên</h5>
         <div>
-            <a href="/Report/ExportExcel" class="btn btn-success btn-sm me-2">
-                <i class="fa-solid fa-file-excel"></i> Xuất Excel
-            </a>
-            <a href="/Report/ExportPdf" class="btn btn-danger btn-sm me-2">
-                <i class="fa-solid fa-file-pdf"></i> Xuất PDF
-            </a>
-            <a href="/Student/Create" class="btn btn-primary btn-sm">
+            <a href="/Student/Create" class="btn btn-success btn-sm fw-bold">
                 <i class="fa-solid fa-plus"></i> Thêm Sinh viên
             </a>
         </div>
     </div>
     <div class="card-body">
-        <table class="table table-bordered table-striped table-hover">
+        <table class="table table-bordered table-striped table-hover align-middle">
             <thead class="table-dark">
                 <tr>
-                    <th>Mã SV</th>
+                    <th style="width: 15%">Mã SV</th>
                     <th>Họ và Tên</th>
                     <th>Email</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
+                    <th class="text-center" style="width: 12%">Trạng thái</th>
+                    <th class="text-center" style="width: 12%">Hành động</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @if (!Model.Any())
                 {
                     <tr>
-                        <td>@item.StudentID</td>
-                        <td>@item.FullName</td>
-                        <td>@item.Email</td>
-                        <td>
-                            @if (item.IsActive)
-                            {
-                                <span class="badge bg-success">Đang học</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Bảo lưu</span>
-                            }
-                        </td>
-                        <td>
-                            <a href="/Student/Edit/@item.StudentID" class="btn btn-warning btn-sm" title="Sửa thông tin">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-
-                            <a href="/Student/Delete/@item.StudentID" class="btn btn-danger btn-sm" title="Xóa sinh viên"
-                               onclick="return confirm('Bạn có chắc chắn muốn xóa sinh viên @item.FullName không? Dữ liệu khuôn mặt cũng sẽ bị xóa vĩnh viễn!');">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
+                        <td colspan="5" class="text-center text-danger fw-bold py-4">
+                            Không tìm thấy sinh viên.
                         </td>
                     </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-primary">@item.StudentID</td>
+                            <td class="fw-semibold">@item.FullName</td>
+                            <td>@item.Email</td>
+                            <td class="text-center">
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success py-2 px-3">Đang học</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger py-2 px-3">Bảo lưu</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a href="/Student/Edit/@item.StudentID" class="btn btn-warning btn-sm shadow-sm" title="Sửa thông tin">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+
+                                <a href="/Student/Delete/@item.StudentID" class="btn btn-danger btn-sm shadow-sm" title="Xóa sinh viên"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa sinh viên @item.FullName không?\nDữ liệu khuôn mặt cũng sẽ bị xóa vĩnh viễn!');">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

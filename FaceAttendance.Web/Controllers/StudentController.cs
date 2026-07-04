@@ -11,9 +11,8 @@ namespace FaceAttendance.Web.Controllers
     {
         private readonly AppDbContext _context;
         private readonly FaceRecognitionService _faceService;
-        private readonly FaceCacheService _cacheService; // Bổ sung Cache Service
+        private readonly FaceCacheService _cacheService;
 
-        // Tiêm Database, AI Service và Cache Service vào Controller
         public StudentController(AppDbContext context, FaceRecognitionService faceService, FaceCacheService cacheService)
         {
             _context = context;
@@ -21,44 +20,51 @@ namespace FaceAttendance.Web.Controllers
             _cacheService = cacheService;
         }
 
-        // 1. Hiển thị danh sách sinh viên
+        // ==========================================
+        // YÊU CẦU 5: CẬP NHẬT TÌM KIẾM CHO HÀM INDEX
+        // ==========================================
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult Index(string searchString)
         {
-            var students = _context.Students.ToList();
+            // Đưa từ khóa vào ViewBag để hiển thị lại trên Form
+            ViewBag.SearchString = searchString;
+
+            // Chuyển sang IQueryable để tối ưu truy vấn Database
+            var query = _context.Students.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                // Lọc theo Mã sinh viên HOẶC Họ tên
+                query = query.Where(s => s.StudentID.Contains(searchString) || s.FullName.Contains(searchString));
+            }
+
+            // Thực thi truy vấn và trả về View
+            var students = query.ToList();
             return View(students);
         }
 
-        // 2. Mở trang Form thêm sinh viên
         [HttpGet]
         public IActionResult Create()
         {
             return View();
         }
 
-        // 3. Xử lý dữ liệu khi bấm nút Submit trên Form
         [HttpPost]
         public async Task<IActionResult> Create(Student student, IFormFile faceImage)
         {
             try
             {
-                // BƯỚC A: LƯU THÔNG TIN CƠ BẢN
                 student.IsActive = true;
                 _context.Students.Add(student);
                 await _context.SaveChangesAsync();
 
-                // BƯỚC B: XỬ LÝ ẢNH & AI
                 if (faceImage != null && faceImage.Length > 0)
                 {
-                    // Đã sửa: Hứng kết quả là List các khuôn mặt từ AI
                     var facesResult = await _faceService.GetFaceEmbeddingAsync(faceImage);
 
-                    // Kiểm tra xem AI có tìm thấy khuôn mặt nào không
                     if (facesResult != null && facesResult.Count > 0)
                     {
-                        // Lấy Vector của khuôn mặt đầu tiên (vì ảnh thẻ đăng ký thường chỉ có 1 người)
                         List<float> vector = facesResult[0].Vector;
-
                         string vectorJson = System.Text.Json.JsonSerializer.Serialize(vector);
 
                         var embeddingRecord = new FaceEmbedding
@@ -71,7 +77,6 @@ namespace FaceAttendance.Web.Controllers
                         _context.FaceEmbeddings.Add(embeddingRecord);
                         await _context.SaveChangesAsync();
 
-                        // [QUAN TRỌNG] Nạp lại bộ nhớ RAM ngay lập tức để AI nhận diện được người mới này!
                         await _cacheService.LoadFacesIntoMemoryAsync();
                     }
                     else
@@ -89,10 +94,6 @@ namespace FaceAttendance.Web.Controllers
                 return View(student);
             }
         }
-
-        // ==========================================
-        // CHỨC NĂNG 1: SỬA THÔNG TIN (EDIT)
-        // ==========================================
 
         [HttpGet]
         public async Task<IActionResult> Edit(string id)
@@ -112,7 +113,6 @@ namespace FaceAttendance.Web.Controllers
             {
                 bool needReloadCache = false;
 
-                // PHẦN A: XỬ LÝ ĐỔI MÃ SINH VIÊN
                 if (oldStudentID != student.StudentID)
                 {
                     var checkExist = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.StudentID == student.StudentID);
@@ -144,26 +144,22 @@ namespace FaceAttendance.Web.Controllers
                         await _context.SaveChangesAsync();
                     }
 
-                    needReloadCache = true; // Đổi mã SV (ảnh hưởng tới Tên/ID) nên cần nạp lại RAM
+                    needReloadCache = true;
                 }
                 else
                 {
                     _context.Students.Update(student);
                     await _context.SaveChangesAsync();
-
-                    // Nếu sửa thông tin tên, cũng cần update RAM
                     needReloadCache = true;
                 }
 
-                // PHẦN B: XỬ LÝ CẬP NHẬT ẢNH KHUÔN MẶT LÊN AI
                 if (faceImage != null && faceImage.Length > 0)
                 {
-                    // Đã sửa: Hứng kết quả là mảng Box & Vector
                     var facesResult = await _faceService.GetFaceEmbeddingAsync(faceImage);
 
                     if (facesResult != null && facesResult.Count > 0)
                     {
-                        List<float> newVector = facesResult[0].Vector; // Lấy khuôn mặt đầu tiên
+                        List<float> newVector = facesResult[0].Vector;
                         string vectorJson = System.Text.Json.JsonSerializer.Serialize(newVector);
 
                         var currentFace = await _context.FaceEmbeddings.FirstOrDefaultAsync(f => f.StudentID == student.StudentID);
@@ -185,11 +181,10 @@ namespace FaceAttendance.Web.Controllers
                             _context.FaceEmbeddings.Add(newFace);
                         }
                         await _context.SaveChangesAsync();
-                        needReloadCache = true; // Có ảnh mới phải nạp lại RAM
+                        needReloadCache = true;
                     }
                 }
 
-                // Nạp lại RAM nếu có thay đổi
                 if (needReloadCache)
                 {
                     await _cacheService.LoadFacesIntoMemoryAsync();
@@ -204,9 +199,6 @@ namespace FaceAttendance.Web.Controllers
             }
         }
 
-        // ==========================================
-        // CHỨC NĂNG 2: XÓA SINH VIÊN (DELETE)
-        // ==========================================
         [HttpGet]
         public async Task<IActionResult> Delete(string id)
         {
@@ -224,7 +216,6 @@ namespace FaceAttendance.Web.Controllers
                 _context.Students.Remove(student);
                 await _context.SaveChangesAsync();
 
-                // Xóa sinh viên xong cũng phải xóa khỏi RAM Cache
                 await _cacheService.LoadFacesIntoMemoryAsync();
             }
 

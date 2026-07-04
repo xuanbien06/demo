@@ -16,12 +16,14 @@
                 <a asp-action="AddStudents" asp-route-id="@Model.ClassID" class="btn btn-success fw-bold shadow-sm">
                     <i class="fa-solid fa-user-plus"></i> + Thêm sinh viên
                 </a>
-                <button class="btn btn-outline-success shadow-sm" onclick="alert('Tính năng xuất Excel sẽ được tích hợp ở Phase sau!')">
+
+                <a asp-action="ExportExcel" asp-route-id="@Model.ClassID" class="btn btn-outline-success shadow-sm">
                     <i class="fa-solid fa-file-excel"></i> Xuất Excel
-                </button>
-                <button class="btn btn-outline-danger shadow-sm" onclick="alert('Tính năng xuất PDF sẽ được tích hợp ở Phase sau!')">
+                </a>
+                <a asp-action="ExportPdf" asp-route-id="@Model.ClassID" class="btn btn-outline-danger shadow-sm">
                     <i class="fa-solid fa-file-pdf"></i> Xuất PDF
-                </button>
+                </a>
+
                 <a asp-action="Index" class="btn btn-secondary shadow-sm">Quay lại</a>
             </div>
         </div>
