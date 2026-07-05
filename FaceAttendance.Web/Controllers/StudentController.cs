@@ -207,15 +207,32 @@ namespace FaceAttendance.Web.Controllers
             var student = await _context.Students.FindAsync(id);
             if (student != null)
             {
+                // 1. Xóa dữ liệu khuôn mặt (như code cũ của bạn)
                 var faceData = _context.FaceEmbeddings.FirstOrDefault(f => f.StudentID == id);
                 if (faceData != null)
                 {
                     _context.FaceEmbeddings.Remove(faceData);
                 }
 
-                _context.Students.Remove(student);
-                await _context.SaveChangesAsync();
+                // 2. Xóa các bản ghi điểm danh của sinh viên này
+                var attendanceRecords = _context.AttendanceRecords.Where(a => a.StudentID == id).ToList();
+                if (attendanceRecords.Any())
+                {
+                    _context.AttendanceRecords.RemoveRange(attendanceRecords);
+                }
 
+                // 3. Xóa sinh viên này khỏi các lớp học đã tham gia
+                var classStudents = _context.ClassStudents.Where(cs => cs.StudentID == id).ToList();
+                if (classStudents.Any())
+                {
+                    _context.ClassStudents.RemoveRange(classStudents);
+                }
+
+                // 4. Cuối cùng mới được xóa sinh viên
+                _context.Students.Remove(student);
+
+                // Lưu thay đổi vào DB
+                await _context.SaveChangesAsync();
                 await _cacheService.LoadFacesIntoMemoryAsync();
             }
 
