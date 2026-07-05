@@ -3,69 +3,417 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Hệ Thống Điểm Danh AI</title>
+    <title>@ViewData["Title"] - LXB SMARTEDU</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
-            /* CSS tự viết để căn chỉnh Sidebar cố định bên trái */
+            /* =========================================
+                       GLOBAL & BACKGROUND
+                       ========================================= */
             body {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background-color: #f4f6f9;
+                background-color: transparent;
+                margin: 0;
+                padding: 0;
             }
 
-            .sidebar {
+            .app-wrapper {
                 min-height: 100vh;
-                background-color: #343a40;
-                color: white;
-                padding-top: 20px;
+                width: 100%;
+                background-color: #ffffff;
+                position: relative;
+                overflow: hidden;
+                display: flex;
             }
 
-                .sidebar a {
-                    color: #c2c7d0;
-                    text-decoration: none;
-                    padding: 10px 20px;
-                    display: block;
-                    transition: 0.3s;
+            /* Background Grid + Glow */
+            .app-background {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 0;
+                pointer-events: none;
+                background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px), linear-gradient(to bottom, #f0f0f0 1px, transparent 1px), radial-gradient(circle 600px at 0% 200px, #d5c5ff, transparent), radial-gradient(circle 600px at 100% 200px, #d5c5ff, transparent), radial-gradient(circle 600px at 50% 0px, #d5c5ff, transparent), radial-gradient(circle 600px at 50% 100%, #d5c5ff, transparent);
+                background-size: 96px 64px, 96px 64px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+            }
+
+            .app-container {
+                position: relative;
+                z-index: 1;
+                display: flex;
+                width: 100%;
+            }
+
+            /* =========================================
+                       SIDEBAR ANIMATION & DESIGN
+                       ========================================= */
+            .app-sidebar {
+                width: 280px;
+                background: rgba(255, 255, 255, 0.75);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-right: 1px solid rgba(255, 255, 255, 0.5);
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03);
+                transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                display: flex;
+                flex-direction: column;
+                overflow-x: hidden;
+                white-space: nowrap;
+                z-index: 100;
+            }
+
+                .app-sidebar.collapsed {
+                    width: 80px;
                 }
 
-                    .sidebar a:hover {
-                        background-color: #495057;
-                        color: white;
-                    }
+            .sidebar-header {
+                height: 80px;
+                display: flex;
+                align-items: center;
+                padding: 0 20px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                overflow: hidden;
+            }
+
+            .app-sidebar.collapsed .sidebar-header {
+                padding: 0;
+                justify-content: center;
+            }
+
+            /* Khối hiển thị thiết kế thương hiệu Logo */
+            .logo-container {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                width: 100%;
+                transition: all 0.4s;
+            }
+
+            .app-sidebar.collapsed .logo-container {
+                justify-content: center;
+                gap: 0;
+            }
+
+            .logo-icon-box {
+                width: 44px;
+                height: 44px;
+                background: linear-gradient(135deg, #6610f2, #7928ca);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1.3rem;
+                box-shadow: 0 4px 12px rgba(102, 16, 242, 0.25);
+                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                flex-shrink: 0;
+            }
+
+            .app-sidebar.collapsed .logo-icon-box {
+                transform: scale(1.05);
+                box-shadow: 0 4px 10px rgba(102, 16, 242, 0.3);
+            }
+
+            .logo-text {
+                display: flex;
+                flex-direction: column;
+                transition: opacity 0.2s ease, transform 0.3s ease, max-width 0.3s ease;
+                max-width: 180px;
+                overflow: hidden;
+            }
+
+            .app-sidebar.collapsed .logo-text {
+                opacity: 0;
+                max-width: 0;
+                transform: translateX(-15px);
+            }
+
+            .brand-title {
+                font-size: 1.1rem;
+                font-weight: 800;
+                letter-spacing: 0.5px;
+                color: #1a1a1a;
+                line-height: 1.2;
+            }
+
+            .brand-subtitle {
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #6610f2;
+                letter-spacing: 0.8px;
+            }
+
+            .sidebar-menu {
+                padding: 16px 0;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .sidebar-item {
+                display: flex;
+                align-items: center;
+                padding: 12px 20px;
+                margin: 0 16px;
+                color: #6c757d;
+                text-decoration: none;
+                font-weight: 500;
+                border-radius: 12px;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .app-sidebar.collapsed .sidebar-item {
+                margin: 0 16px;
+                padding: 12px 0;
+                justify-content: center;
+            }
+
+            .sidebar-item i {
+                font-size: 1.2rem;
+                min-width: 24px;
+                text-align: center;
+                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .sidebar-item span {
+                margin-left: 16px;
+                transition: opacity 0.3s, transform 0.3s;
+            }
+
+            .app-sidebar.collapsed .sidebar-item span {
+                opacity: 0;
+                display: none;
+            }
+
+            /* Hover Effect */
+            .sidebar-item:hover {
+                background: rgba(102, 16, 242, 0.08);
+                color: #6610f2;
+            }
+
+                .sidebar-item:hover i {
+                    transform: scale(1.15) translateY(-2px);
+                }
+
+            /* Active Effect */
+            .sidebar-item.active {
+                background: #6610f2;
+                color: #ffffff;
+                box-shadow: 0 4px 15px rgba(102, 16, 242, 0.3);
+            }
+
+                .sidebar-item.active i {
+                    color: #ffffff;
+                }
+
+            /* Ripple Effect */
+            .sidebar-item::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+                opacity: 0;
+            }
+
+            .sidebar-item:active::after {
+                width: 200px;
+                height: 200px;
+                opacity: 1;
+                transition: 0s;
+            }
+
+            /* =========================================
+                       MAIN CONTENT & HEADER
+                       ========================================= */
+            .app-main {
+                flex-grow: 1;
+                height: 100vh;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+
+            .top-navbar {
+                height: 76px;
+                background: rgba(255, 255, 255, 0.6);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 32px;
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+
+            .toggle-btn {
+                background: none;
+                border: none;
+                font-size: 1.25rem;
+                color: #495057;
+                cursor: pointer;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.3s, transform 0.3s;
+            }
+
+                .toggle-btn:hover {
+                    background: rgba(0,0,0,0.05);
+                    transform: scale(1.05);
+                }
 
             .content-area {
-                padding: 20px;
+                padding: 32px;
+                flex-grow: 1;
+            }
+
+            /* Glassmorphism Card Wrapper */
+            .glass-card {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.6);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+                border-radius: 16px;
+                padding: 24px;
+                animation: fadeIn 0.5s ease;
+            }
+
+            /* Sử dụng ký tự double @@ để báo cho trình dịch Razor không quét lỗi C# */
+            @@keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
     </style>
 </head>
 <body>
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <div class="col-md-2 sidebar">
-                <h4 class="text-center mb-4"><i class="fa-solid fa-face-scan"></i> AI Attendance</h4>
-                <a href="/Home/Index"><i class="fa-solid fa-gauge me-2"></i> Tổng quan</a>
-                <a href="/Student/Index"><i class="fa-solid fa-user-graduate me-2"></i> Quản lý Sinh viên</a>
-                <a href="/Class/Index"><i class="fa-solid fa-chalkboard-user me-2"></i> Quản lý Lớp học</a>
-                <a href="/Attendance/Index"><i class="fa-solid fa-camera me-2"></i> Điểm danh Camera</a>
-            </div>
+    <div class="app-wrapper">
+        <div class="app-background"></div>
 
-            <div class="col-md-10 content-area">
-                <div class="d-flex justify-content-between align-items-center bg-white p-3 mb-4 shadow-sm rounded">
-                    <h5 class="m-0">@ViewData["Title"]</h5>
-                    <div>
-                        <span class="me-3"><i class="fa-solid fa-bell"></i></span>
-                        <span><i class="fa-solid fa-user-circle"></i> Giảng viên</span>
+        <div class="app-container">
+            <aside class="app-sidebar" id="sidebar">
+                <script>
+                                    if (localStorage.getItem("sidebarStatus") === "collapsed") {
+                                        document.currentScript.parentElement.classList.add("collapsed");
+                                    }
+                </script>
+
+                <div class="sidebar-header">
+                    <div class="logo-container">
+                        <div class="logo-icon-box">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <div class="logo-text">
+                            <span class="brand-title">LXB</span>
+                            <span class="brand-subtitle">SMARTEDU</span>
+                        </div>
                     </div>
                 </div>
+                <div class="sidebar-menu">
+                    <a href="/Home/Index" class="sidebar-item">
+                        <i class="fa-solid fa-gauge"></i>
+                        <span>Tổng quan</span>
+                    </a>
+                    <a href="/Student/Index" class="sidebar-item">
+                        <i class="fa-solid fa-user-graduate"></i>
+                        <span>Quản lý Sinh viên</span>
+                    </a>
+                    <a href="/Class/Index" class="sidebar-item">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                        <span>Quản lý Lớp học</span>
+                    </a>
+                    <a href="/Attendance/Index" class="sidebar-item">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Điểm danh Camera</span>
+                    </a>
+                </div>
+            </aside>
 
-                @RenderBody()
-            </div>
+            <main class="app-main">
+                <header class="top-navbar">
+                    <div class="d-flex align-items-center">
+                        <button class="toggle-btn" id="toggleSidebar" title="Thu gọn/Mở rộng Menu">
+                            <i class="fa-solid fa-bars-staggered"></i>
+                        </button>
+                        <h5 class="m-0 ms-3 fw-bold text-dark">@ViewData["Title"]</h5>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <button class="toggle-btn me-2">
+                            <i class="fa-solid fa-bell"></i>
+                        </button>
+                        <div class="d-flex align-items-center ms-2" style="cursor: pointer;">
+                            <i class="fa-solid fa-user-circle fs-4 text-primary"></i>
+                            <span class="ms-2 fw-semibold text-dark">Giảng viên</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="content-area">
+                    <div class="glass-card">
+                        @RenderBody()
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("toggleSidebar");
+
+        // Lắng nghe hành vi click và cập nhật trạng thái lưu trữ vào bộ nhớ cục bộ
+        toggleBtn.addEventListener("click", function () {
+        sidebar.classList.toggle("collapsed");
+        if (sidebar.classList.contains("collapsed")) {
+        localStorage.setItem("sidebarStatus", "collapsed");
+        } else {
+        localStorage.setItem("sidebarStatus", "expanded");
+        }
+        });
+
+        // Tự động rà soát tuyến đường URL để bật sáng menu tương ứng
+        const currentPath = window.location.pathname.toLowerCase();
+        const navItems = document.querySelectorAll(".sidebar-item");
+
+        navItems.forEach(item => {
+        const href = item.getAttribute("href").toLowerCase();
+        if (currentPath === href || (currentPath === '/' && href.includes('/home/index')) || (currentPath.includes(href) && href !== '/')) {
+        item.classList.add("active");
+        }
+        });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
