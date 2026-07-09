@@ -16,8 +16,8 @@ def load_yunet_model():
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
         
-    model_url = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
-    model_path = os.path.join(model_dir, "face_detection_yunet_2023mar.onnx")
+    model_url = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2026may.onnx"
+    model_path = os.path.join(model_dir, "face_detection_yunet_2026may.onnx")
     
     if not os.path.exists(model_path):
         print("Đang tải file AI YuNet (1.5MB)... Vui lòng đợi...")
