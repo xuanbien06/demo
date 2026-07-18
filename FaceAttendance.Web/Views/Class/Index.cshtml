@@ -1,84 +1,221 @@
-﻿@model IEnumerable<FaceAttendance.Web.Models.ClassRoom>
-
-@{
+﻿@{
     ViewData["Title"] = "Quản lý Lớp học";
 }
 
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Danh sách Lớp học</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> + Thêm lớp
-        </a>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-school me-2"></i>Danh sách Lớp học</h4>
+    <button class="btn btn-primary shadow-sm" onclick="openModal()">
+        <i class="fa-solid fa-plus me-2"></i>Thêm Lớp Mới
+    </button>
+</div>
 
-    <form asp-action="Index" method="get" class="mb-4">
-        <div class="input-group w-50">
-            <input type="text" name="searchString" class="form-control" placeholder="Tìm kiếm theo tên lớp..." value="@ViewBag.SearchString">
-            <button class="btn btn-outline-secondary" type="submit">Tìm kiếm</button>
-            @if (!string.IsNullOrEmpty(ViewBag.SearchString))
-            {
-                <a asp-action="Index" class="btn btn-outline-danger">Xóa lọc</a>
-            }
+<div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>STT</th>
+                <th class="text-start">Tên Lớp</th>
+                <th class="text-start">Môn Học</th>
+                <th class="text-start">Học Kỳ</th>
+                <th class="text-start">Giảng Viên</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody" class="text-center">
+            <!-- Data render qua AJAX -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Thêm/Sửa Lớp Học -->
+<div class="modal fade" id="classModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thêm Lớp Học</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="classForm">
+                    <input type="hidden" id="classId" value="0" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên Lớp (Mã Lớp)</label>
+                        <input type="text" class="form-control bg-light text-uppercase" id="className" placeholder="VD: SE1501" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Thuộc Môn Học</label>
+                            <select class="form-select bg-light" id="subjectId" required></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Học Kỳ</label>
+                            <select class="form-select bg-light" id="semesterId" required></select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phân công Giảng viên</label>
+                        <select class="form-select bg-light" id="teacherId">
+                            <option value="">-- Chưa phân công --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" onclick="saveClass()">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Lưu thông tin
+                </button>
+            </div>
         </div>
-    </form>
+    </div>
+</div>
 
-    <div class="table-responsive shadow-sm rounded">
-        <table class="table table-hover table-bordered mb-0 align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th class="text-center" style="width: 5%">STT</th>
-                    <th style="width: 30%">Tên lớp</th>
-                    <th class="text-center" style="width: 15%">Số lượng SV</th>
-                    <th class="text-center" style="width: 20%">Ngày tạo</th>
-                    <th class="text-center" style="width: 30%">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Không tìm thấy dữ liệu lớp học nào.</td>
-                    </tr>
-                }
-                else
-                {
-                    int index = (ViewBag.CurrentPage - 1) * 10 + 1;
-                    foreach (var item in Model)
-                    {
+@section Scripts {
+    <script>
+        let classModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(document.getElementById('classModal'));
+            classModal = new bootstrap.Modal(document.getElementById('classModal'));
+            loadDropdownData();
+            loadClasses();
+        });
+
+        async function loadDropdownData() {
+            try {
+                const res = await fetch('/Class/GetDropdownData');
+                const data = await res.json();
+
+                const subjectSelect = document.getElementById('subjectId');
+                const semesterSelect = document.getElementById('semesterId');
+                const teacherSelect = document.getElementById('teacherId');
+
+                subjectSelect.innerHTML = '<option value="">-- Chọn Môn học --</option>';
+                data.subjects.forEach(s => subjectSelect.insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.subjectName}</option>`));
+
+                semesterSelect.innerHTML = '<option value="">-- Chọn Học kỳ --</option>';
+                data.semesters.forEach(s => semesterSelect.insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.semesterName}</option>`));
+
+                teacherSelect.innerHTML = '<option value="">-- Chưa phân công --</option>';
+                data.teachers.forEach(t => teacherSelect.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.fullName}</option>`));
+            } catch (e) {
+                console.error("Lỗi khi tải Dropdown:", e);
+            }
+        }
+
+        async function loadClasses() {
+            try {
+                const res = await fetch('/Class/GetAll');
+                const data = await res.json();
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                data.data.forEach((c, index) => {
+                    const teacherBadge = c.teacherId
+                        ? `<span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="fa-solid fa-chalkboard-user me-1"></i>${c.teacherName}</span>`
+                        : `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Chưa phân công</span>`;
+
+                    const tr = `
                         <tr>
-                            <td class="text-center fw-bold">@(index++)</td>
-                            <td class="fw-semibold">@item.ClassName</td>
-                            <td class="text-center">
-                                <span class="badge bg-info text-dark rounded-pill px-3">@item.ClassStudents.Count</span>
-                            </td>
-                            <td class="text-center">@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td class="text-center">
-                                <a asp-action="Details" asp-route-id="@item.ClassID" class="btn btn-sm btn-info text-white">Xem chi tiết</a>
-                                <a asp-action="Edit" asp-route-id="@item.ClassID" class="btn btn-sm btn-warning text-dark">Sửa</a>
-
-                                <form asp-action="Delete" asp-route-id="@item.ClassID" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lớp này? Mọi dữ liệu điểm danh của lớp sẽ bị xóa (Không xóa sinh viên).');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                                </form>
+                            <td class="fw-bold text-muted">${index + 1}</td>
+                            <td class="fw-bold text-primary text-start text-uppercase">${c.className}</td>
+                            <td class="text-start">${c.subjectName}</td>
+                            <td class="text-start"><span class="badge bg-info text-dark">${c.semesterName}</span></td>
+                            <td class="text-start">${teacherBadge}</td>
+                            <td>
+                                <a href="/Class/AddStudents?id=${c.classID}" class="btn btn-sm btn-outline-info shadow-sm me-1" title="Quản lý Sinh viên">
+                                    <i class="fa-solid fa-users"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-primary shadow-sm me-1" onclick="openModal(${c.classID}, '${c.className}', ${c.subjectId}, ${c.semesterId}, ${c.teacherId || "''"})" title="Chỉnh sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="deleteClass(${c.classID})" title="Xóa lớp">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', tr);
+                });
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải danh sách Lớp học', 'error');
+            }
+        }
+
+        function openModal(id = 0, name = '', subjectId = '', semesterId = '', teacherId = '') {
+            document.getElementById('classId').value = id;
+            document.getElementById('className').value = name;
+            document.getElementById('subjectId').value = subjectId;
+            document.getElementById('semesterId').value = semesterId;
+            document.getElementById('teacherId').value = teacherId;
+
+            document.getElementById('modalTitle').innerText = id === 0 ? 'Thêm Lớp Học Mới' : 'Cập nhật Lớp Học';
+            classModal.show();
+        }
+
+        async function saveClass() {
+            if (!document.getElementById('classForm').reportValidity()) return;
+
+            const teacherIdVal = document.getElementById('teacherId').value;
+
+            const payload = {
+                classID: parseInt(document.getElementById('classId').value),
+                className: document.getElementById('className').value,
+                subjectId: parseInt(document.getElementById('subjectId').value),
+                semesterId: parseInt(document.getElementById('semesterId').value),
+                teacherId: teacherIdVal ? parseInt(teacherIdVal) : null
+            };
+
+            try {
+                const res = await fetch('/Class/Save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                    classModal.hide();
+                    loadClasses();
+                } else {
+                    Swal.fire('Lỗi!', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống!', 'Mất kết nối tới Server.', 'error');
+            }
+        }
+
+        async function deleteClass(id) {
+            Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: "Hành động này sẽ xóa lớp học vĩnh viễn!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`/Class/Delete?id=${id}`, { method: 'POST' });
+                        const data = await res.json();
+
+                        if (res.ok && data.success) {
+                            Swal.fire('Đã xóa', data.message, 'success');
+                            loadClasses();
+                        } else {
+                            Swal.fire('Thất bại', data.message, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi', 'Không thể kết nối với máy chủ', 'error');
                     }
                 }
-            </tbody>
-        </table>
-    </div>
-
-    @if (ViewBag.TotalPages > 1)
-    {
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                {
-                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@ViewBag.SearchString">@i</a>
-                    </li>
-                }
-            </ul>
-        </nav>
-    }
-</div>
+            });
+        }
+    </script>
+}

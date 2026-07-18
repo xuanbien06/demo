@@ -4,6 +4,7 @@ using FaceAttendance.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FaceAttendance.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710101847_AddAcademicEntities")]
+    partial class AddAcademicEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,6 +117,10 @@ namespace FaceAttendance.Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Schedule")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<int?>("SemesterId")
                         .HasColumnType("int");
 
@@ -154,28 +161,24 @@ namespace FaceAttendance.Web.Migrations
 
             modelBuilder.Entity("FaceAttendance.Web.Models.FaceEmbedding", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("EmbeddingID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmbeddingID"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("EmbeddingVector")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagePath")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("StudentID")
                         .IsRequired()
-                        .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("VectorData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EmbeddingID");
 
                     b.HasIndex("StudentID");
 
@@ -309,9 +312,6 @@ namespace FaceAttendance.Web.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("FacultyId")
-                        .HasColumnType("int");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -326,8 +326,6 @@ namespace FaceAttendance.Web.Migrations
                     b.HasKey("StudentID");
 
                     b.HasIndex("AcademicYearId");
-
-                    b.HasIndex("FacultyId");
 
                     b.HasIndex("MajorId");
 
@@ -526,17 +524,13 @@ namespace FaceAttendance.Web.Migrations
                         .WithMany("Students")
                         .HasForeignKey("AcademicYearId");
 
-                    b.HasOne("FaceAttendance.Web.Models.Faculty", "Faculty")
-                        .WithMany()
-                        .HasForeignKey("FacultyId");
-
-                    b.HasOne("FaceAttendance.Web.Models.Major", null)
+                    b.HasOne("FaceAttendance.Web.Models.Major", "Major")
                         .WithMany("Students")
                         .HasForeignKey("MajorId");
 
                     b.Navigation("AcademicYear");
 
-                    b.Navigation("Faculty");
+                    b.Navigation("Major");
                 });
 
             modelBuilder.Entity("FaceAttendance.Web.Models.User", b =>

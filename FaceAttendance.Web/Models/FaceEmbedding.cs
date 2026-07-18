@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FaceAttendance.Web.Models
@@ -6,17 +7,19 @@ namespace FaceAttendance.Web.Models
     public class FaceEmbedding
     {
         [Key]
-        public int EmbeddingID { get; set; }
+        public int Id { get; set; }
 
         [Required]
-        [Column(TypeName = "varchar(20)")]
+        [StringLength(20)]
         public string StudentID { get; set; } = string.Empty;
 
         [ForeignKey("StudentID")]
-        public Student Student { get; set; } = null!; // EF sẽ gán, =null! để loại warning nullable
+        public Student? Student { get; set; }
 
-        [Required]
-        public string VectorData { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? ImagePath { get; set; } // Đường dẫn lưu ảnh trong thư mục wwwroot
+
+        public string? EmbeddingVector { get; set; } // Vector AI 128D hoặc 512D (Lưu dạng chuỗi JSON)
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }

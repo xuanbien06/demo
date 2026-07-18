@@ -1,118 +1,262 @@
-﻿@model IEnumerable<FaceAttendance.Web.Models.Student>
-
-@{
-    ViewData["Title"] = "Thêm Sinh viên vào lớp";
+﻿@{
+    ViewData["Title"] = "Danh sách Sinh viên Lớp học";
 }
 
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4>Thêm sinh viên vào lớp: <span class="text-primary">@ViewBag.ClassName</span></h4>
-        <a asp-action="Details" asp-route-id="@ViewBag.ClassID" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Quay lại lớp học
-        </a>
-    </div>
+<!-- ID Lớp học được nhúng từ Backend ra biến JS -->
+<input type="hidden" id="currentClassId" value="@ViewBag.ClassId" />
 
-    <form asp-action="AddStudents" method="get" class="mb-4">
-        <input type="hidden" name="id" value="@ViewBag.ClassID" />
-        <div class="input-group w-50">
-            <input type="text" name="searchString" class="form-control" placeholder="Tìm theo Mã SV hoặc Họ tên..." value="@ViewBag.SearchString">
-            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-            @if (!string.IsNullOrEmpty(ViewBag.SearchString))
-            {
-                <a asp-action="AddStudents" asp-route-id="@ViewBag.ClassID" class="btn btn-outline-danger">Xóa lọc</a>
-            }
+<!-- Header: Nút Quay lại và Thông tin -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="/Class/Index" class="btn btn-outline-secondary shadow-sm">
+        <i class="fa-solid fa-arrow-left me-2"></i>Quay lại
+    </a>
+    <button class="btn btn-primary shadow-sm" onclick="openAddModal()">
+        <i class="fa-solid fa-user-plus me-2"></i>Thêm Sinh Viên
+    </button>
+</div>
+
+<!-- Card Thông tin lớp học -->
+<div class="card border-0 shadow-sm mb-4 bg-white rounded">
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3 border-end">
+                <p class="text-muted mb-1 fs-7 text-uppercase">Tên Lớp</p>
+                <h5 class="fw-bold text-primary mb-0" id="lblClassName">---</h5>
+            </div>
+            <div class="col-md-3 border-end">
+                <p class="text-muted mb-1 fs-7 text-uppercase">Môn Học</p>
+                <h6 class="fw-bold text-dark mb-0" id="lblSubject">---</h6>
+            </div>
+            <div class="col-md-3 border-end">
+                <p class="text-muted mb-1 fs-7 text-uppercase">Học Kỳ</p>
+                <h6 class="fw-bold text-dark mb-0" id="lblSemester">---</h6>
+            </div>
+            <div class="col-md-3">
+                <p class="text-muted mb-1 fs-7 text-uppercase">Giảng Viên</p>
+                <h6 class="fw-bold text-success mb-0" id="lblTeacher">---</h6>
+            </div>
         </div>
-    </form>
+    </div>
+</div>
 
-    <form asp-action="AddStudents" method="post">
-        <input type="hidden" name="id" value="@ViewBag.ClassID" />
+<!-- Bảng Sinh viên trong lớp -->
+<div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>STT</th>
+                <th class="text-start">Mã SV</th>
+                <th class="text-start">Họ và Tên</th>
+                <th class="text-start">Email</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="enrolledTableBody" class="text-center">
+            <!-- Data render qua AJAX -->
+        </tbody>
+    </table>
+</div>
 
-        <div class="table-responsive shadow-sm bg-white p-3 rounded">
-            <div class="mb-3 d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Chọn tất cả</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Bỏ chọn tất cả</button>
-
-                <button type="submit" class="btn btn-sm btn-success ms-auto fw-bold" id="btnSubmit" disabled>
-                    <i class="fa-solid fa-plus"></i> Thêm vào lớp (<span id="selectedCount">0</span>)
+<!-- Modal Thêm Sinh Viên (Chứa Checklist) -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Chọn Sinh Viên Vào Lớp</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-center sticky-top">
+                        <tr>
+                            <th style="width: 50px;">
+                                <!-- Checkbox Chọn Tất Cả -->
+                                <input class="form-check-input fs-5" type="checkbox" id="selectAll">
+                            </th>
+                            <th class="text-start">Mã SV</th>
+                            <th class="text-start">Họ và Tên</th>
+                        </tr>
+                    </thead>
+                    <tbody id="availableTableBody" class="text-center">
+                        <!-- Render các sinh viên có thể thêm -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" onclick="submitAddStudents()">
+                    <i class="fa-solid fa-plus me-2"></i>Thêm Đã Chọn
                 </button>
             </div>
-
-            <table class="table table-hover table-bordered align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th class="text-center" style="width: 5%">Chọn</th>
-                        <th class="text-center" style="width: 15%">Mã SV</th>
-                        <th>Họ tên</th>
-                        <th>Email</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="4" class="text-center text-muted py-4">
-                                Không có sinh viên nào để thêm (Tất cả sinh viên đều đã ở trong lớp này).
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var item in Model)
-                        {
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" name="selectedStudents" value="@item.StudentID" class="form-check-input student-checkbox" style="width: 20px; height: 20px;" />
-                                </td>
-                                <td class="text-center fw-bold text-primary">@item.StudentID</td>
-                                <td class="fw-semibold">@item.FullName</td>
-                                <td>@item.Email</td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
         </div>
-    </form>
+    </div>
 </div>
 
 @section Scripts {
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Lấy các element
-            const selectAllBtn = document.getElementById('selectAll');
-            const deselectAllBtn = document.getElementById('deselectAll');
-            const checkboxes = document.querySelectorAll('.student-checkbox');
-            const btnSubmit = document.getElementById('btnSubmit');
-            const selectedCountSpan = document.getElementById('selectedCount');
+        const classId = document.getElementById('currentClassId').value;
+        let addModal;
 
-            // Hàm cập nhật số lượng và trạng thái nút Submit
-            function updateSelectedCount() {
-                const count = document.querySelectorAll('.student-checkbox:checked').length;
-                selectedCountSpan.textContent = count;
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(document.getElementById('addStudentModal'));
+            addModal = new bootstrap.Modal(document.getElementById('addStudentModal'));
 
-                if (count > 0) {
-                    btnSubmit.removeAttribute('disabled');
-                } else {
-                    btnSubmit.setAttribute('disabled', 'disabled');
-                }
-            }
+            loadClassInfo();
+            loadEnrolledStudents();
 
-            // Xử lý nút Chọn tất cả
-            selectAllBtn.addEventListener('click', function () {
-                checkboxes.forEach(cb => cb.checked = true);
-                updateSelectedCount();
-            });
-
-            // Xử lý nút Bỏ chọn tất cả
-            deselectAllBtn.addEventListener('click', function () {
-                checkboxes.forEach(cb => cb.checked = false);
-                updateSelectedCount();
-            });
-
-            // Xử lý khi tick tay vào từng ô checkbox
-            checkboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedCount);
+            // Logic cho nút Chọn Tất Cả (Select All)
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.student-checkbox');
+                checkboxes.forEach(cb => cb.checked = this.checked);
             });
         });
+
+        // 1. Tải thông tin Lớp học
+        async function loadClassInfo() {
+            try {
+                const res = await fetch(`/Class/GetClassInfo?id=${classId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                document.getElementById('lblClassName').innerText = data.className;
+                document.getElementById('lblSubject').innerText = data.subjectName;
+                document.getElementById('lblSemester').innerText = data.semesterName;
+                document.getElementById('lblTeacher').innerText = data.teacherName;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 2. Tải sinh viên ĐÃ CÓ trong lớp
+        async function loadEnrolledStudents() {
+            try {
+                const res = await fetch(`/Class/GetEnrolledStudents?classId=${classId}`);
+                const data = await res.json();
+                const tbody = document.getElementById('enrolledTableBody');
+                tbody.innerHTML = '';
+
+                if (data.data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-muted fst-italic py-4">Lớp này chưa có sinh viên nào.</td></tr>`;
+                    return;
+                }
+
+                data.data.forEach((s, index) => {
+                    const tr = `
+                        <tr>
+                            <td class="fw-bold text-muted">${index + 1}</td>
+                            <td class="fw-bold text-primary text-start text-uppercase">${s.studentID}</td>
+                            <td class="text-start fw-semibold">${s.fullName}</td>
+                            <td class="text-start text-muted">${s.email}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="removeStudent('${s.studentID}')" title="Xóa khỏi lớp">
+                                    <i class="fa-solid fa-user-minus"></i> Xóa
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', tr);
+                });
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải danh sách sinh viên', 'error');
+            }
+        }
+
+        // 3. Mở Modal & Tải sinh viên CÓ THỂ THÊM
+        async function openAddModal() {
+            try {
+                document.getElementById('selectAll').checked = false; // Reset checkbox tổng
+
+                const res = await fetch(`/Class/GetAvailableStudents?classId=${classId}`);
+                const data = await res.json();
+                const tbody = document.getElementById('availableTableBody');
+                tbody.innerHTML = '';
+
+                if (data.data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-muted fst-italic py-4">Không còn sinh viên nào để thêm.</td></tr>`;
+                } else {
+                    data.data.forEach(s => {
+                        const tr = `
+                            <tr>
+                                <td>
+                                    <input class="form-check-input fs-5 student-checkbox" type="checkbox" value="${s.studentID}">
+                                </td>
+                                <td class="fw-bold text-primary text-start text-uppercase">${s.studentID}</td>
+                                <td class="text-start fw-semibold">${s.fullName}</td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', tr);
+                    });
+                }
+
+                addModal.show();
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải dữ liệu sinh viên', 'error');
+            }
+        }
+
+        // 4. Submit Thêm sinh viên
+        async function submitAddStudents() {
+            // Lấy tất cả giá trị value (Mã SV) từ các checkbox đang được check
+            const selectedIds = Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                Swal.fire('Lưu ý', 'Vui lòng chọn ít nhất 1 sinh viên!', 'warning');
+                return;
+            }
+
+            const payload = {
+                classId: parseInt(classId),
+                studentIds: selectedIds
+            };
+
+            try {
+                const res = await fetch('/Class/AddStudentsToClass', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                    addModal.hide();
+                    loadEnrolledStudents(); // Tải lại bảng gốc
+                } else {
+                    Swal.fire('Lỗi', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống!', 'Mất kết nối tới Server.', 'error');
+            }
+        }
+
+        // 5. Submit Xóa sinh viên
+        async function removeStudent(studentId) {
+            Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: "Xóa sinh viên này khỏi danh sách lớp?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Xóa ngay',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`/Class/RemoveStudentFromClass?classId=${classId}&studentId=${studentId}`, { method: 'POST' });
+                        const data = await res.json();
+
+                        if (res.ok && data.success) {
+                            Swal.fire({ icon: 'success', title: 'Đã xóa', text: data.message, timer: 1500, showConfirmButton: false });
+                            loadEnrolledStudents();
+                        } else {
+                            Swal.fire('Không thể xóa', data.message, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi', 'Không thể kết nối với máy chủ', 'error');
+                    }
+                }
+            });
+        }
     </script>
 }

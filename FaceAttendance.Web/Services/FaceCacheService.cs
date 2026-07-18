@@ -26,9 +26,9 @@ namespace FaceAttendance.Web.Services
 
             foreach (var face in allFaces)
             {
-                if (string.IsNullOrEmpty(face.VectorData)) continue;
+                if (string.IsNullOrEmpty(face.EmbeddingVector)) continue;
 
-                var vector = JsonSerializer.Deserialize<List<float>>(face.VectorData);
+                var vector = JsonSerializer.Deserialize<List<float>>(face.EmbeddingVector);
                 if (vector != null)
                 {
                     // Lưu thẳng StudentID vào bộ nhớ RAM

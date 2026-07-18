@@ -1,0 +1,268 @@
+﻿@{
+    ViewData["Title"] = "Thời gian Học thuật";
+}
+
+<div class="mb-4">
+    <h4 class="fw-bold text-primary mb-3"><i class="fa-solid fa-calendar-days me-2"></i>Quản lý Khóa & Học kỳ</h4>
+
+    <ul class="nav nav-tabs fw-bold" id="termTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="year-tab" data-bs-toggle="tab" data-bs-target="#year-pane" type="button" role="tab">Danh sách Khóa học</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="semester-tab" data-bs-toggle="tab" data-bs-target="#semester-pane" type="button" role="tab">Danh sách Học kỳ</button>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-content" id="termTabsContent">
+
+    <div class="tab-pane fade show active" id="year-pane" role="tabpanel">
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-primary" onclick="openYearModal()"><i class="fa-solid fa-plus me-2"></i>Thêm Khóa</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle shadow-sm bg-white rounded">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>STT</th>
+                        <th class="text-start">Tên Khóa</th>
+                        <th class="text-start">Mô tả</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="yearTableBody" class="text-center"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="semester-pane" role="tabpanel">
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-primary" onclick="openSemesterModal()"><i class="fa-solid fa-plus me-2"></i>Thêm Học kỳ</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle shadow-sm bg-white rounded">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>STT</th>
+                        <th class="text-start">Tên Học kỳ</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="semesterTableBody" class="text-center"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="yearModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="yearModalTitle">Thêm Khóa học</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="yearForm">
+                    <input type="hidden" id="yearId" value="0" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên Khóa (VD: Khóa 15)</label>
+                        <input type="text" class="form-control" id="yearName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả</label>
+                        <textarea class="form-control" id="yearDesc" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveYear()">Lưu lại</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="semesterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="semesterModalTitle">Thêm Học kỳ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="semesterForm">
+                    <input type="hidden" id="semesterId" value="0" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên Học kỳ (VD: HK1 2026-2027)</label>
+                        <input type="text" class="form-control" id="semesterName" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Ngày bắt đầu</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Ngày kết thúc</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveSemester()">Lưu lại</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let yearModal, semesterModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Nhấc Modals ra ngoài Body để tránh lỗi CSS Z-Index
+            document.body.appendChild(document.getElementById('yearModal'));
+            document.body.appendChild(document.getElementById('semesterModal'));
+
+            yearModal = new bootstrap.Modal(document.getElementById('yearModal'));
+            semesterModal = new bootstrap.Modal(document.getElementById('semesterModal'));
+
+            loadYears();
+            loadSemesters();
+        });
+
+        // ====== XỬ LÝ KHÓA HỌC ======
+        async function loadYears() {
+            const res = await fetch('/Term/GetYears');
+            const data = await res.json();
+            const tbody = document.getElementById('yearTableBody');
+            tbody.innerHTML = '';
+
+            data.data.forEach((y, i) => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td class="fw-bold text-start">${y.yearName}</td>
+                        <td class="text-start">${y.description || ''}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openYearModal(${y.id}, '${y.yearName}', '${y.description || ''}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteYear(${y.id})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function openYearModal(id = 0, name = '', desc = '') {
+            document.getElementById('yearId').value = id;
+            document.getElementById('yearName').value = name;
+            document.getElementById('yearDesc').value = desc;
+            document.getElementById('yearModalTitle').innerText = id === 0 ? 'Thêm Khóa Mới' : 'Cập nhật Khóa';
+            yearModal.show();
+        }
+
+        async function saveYear() {
+            if (!document.getElementById('yearForm').reportValidity()) return;
+            const payload = {
+                id: parseInt(document.getElementById('yearId').value),
+                yearName: document.getElementById('yearName').value,
+                description: document.getElementById('yearDesc').value
+            };
+            const res = await fetch('/Term/SaveYear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (data.success) {
+                yearModal.hide();
+                Swal.fire('Thành công', data.message, 'success');
+                loadYears();
+            } else {
+                Swal.fire('Lỗi', data.message, 'error');
+            }
+        }
+
+        async function deleteYear(id) {
+            if (confirm("Bạn có chắc muốn xóa Khóa này?")) {
+                const res = await fetch(`/Term/DeleteYear?id=${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) { Swal.fire('Đã xóa', data.message, 'success'); loadYears(); }
+                else Swal.fire('Không thể xóa', data.message, 'error');
+            }
+        }
+
+        // ====== XỬ LÝ HỌC KỲ ======
+        async function loadSemesters() {
+            const res = await fetch('/Term/GetSemesters');
+            const data = await res.json();
+            const tbody = document.getElementById('semesterTableBody');
+            tbody.innerHTML = '';
+
+            data.data.forEach((s, i) => {
+                // Format lại ngày hiển thị cho đẹp (DD/MM/YYYY)
+                const start = new Date(s.startDate).toLocaleDateString('vi-VN');
+                const end = new Date(s.endDate).toLocaleDateString('vi-VN');
+
+                const statusBadge = s.isActive
+                    ? `<span class="badge bg-success bg-opacity-10 text-success border border-success">Đang mở</span>`
+                    : `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Đã đóng</span>`;
+
+                const lockIcon = s.isActive ? 'fa-lock' : 'fa-unlock';
+                const lockClass = s.isActive ? 'btn-outline-danger' : 'btn-outline-success';
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td class="fw-bold text-start">${s.semesterName}</td>
+                        <td>${start} - ${end}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openSemesterModal(${s.id}, '${s.semesterName}', '${s.startDate}', '${s.endDate}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm ${lockClass}" onclick="toggleSemester(${s.id})" title="Đóng/Mở Học kỳ"><i class="fa-solid ${lockIcon}"></i></button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function openSemesterModal(id = 0, name = '', startDate = '', endDate = '') {
+            document.getElementById('semesterId').value = id;
+            document.getElementById('semesterName').value = name;
+
+            // Xử lý cắt chuỗi ngày tháng để gắn vào thẻ <input type="date"> (Định dạng bắt buộc yyyy-MM-dd)
+            document.getElementById('startDate').value = startDate ? startDate.split('T')[0] : '';
+            document.getElementById('endDate').value = endDate ? endDate.split('T')[0] : '';
+
+            document.getElementById('semesterModalTitle').innerText = id === 0 ? 'Thêm Học kỳ Mới' : 'Cập nhật Học kỳ';
+            semesterModal.show();
+        }
+
+        async function saveSemester() {
+            if (!document.getElementById('semesterForm').reportValidity()) return;
+            const payload = {
+                id: parseInt(document.getElementById('semesterId').value),
+                semesterName: document.getElementById('semesterName').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value
+            };
+            const res = await fetch('/Term/SaveSemester', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (data.success) {
+                semesterModal.hide();
+                Swal.fire('Thành công', data.message, 'success');
+                loadSemesters();
+            } else {
+                Swal.fire('Lỗi', data.message, 'error');
+            }
+        }
+
+        async function toggleSemester(id) {
+            if (confirm("Xác nhận Đóng/Mở Học kỳ này?")) {
+                const res = await fetch(`/Term/ToggleSemesterStatus?id=${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) { Swal.fire('Thành công', data.message, 'success'); loadSemesters(); }
+            }
+        }
+    </script>
+}

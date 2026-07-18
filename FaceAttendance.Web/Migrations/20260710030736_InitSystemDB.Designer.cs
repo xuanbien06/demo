@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FaceAttendance.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260702140649_AddClassAndAttendanceTables")]
-    partial class AddClassAndAttendanceTables
+    [Migration("20260710030736_InitSystemDB")]
+    partial class InitSystemDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -79,7 +79,7 @@ namespace FaceAttendance.Web.Migrations
                     b.ToTable("AttendanceSessions");
                 });
 
-            modelBuilder.Entity("FaceAttendance.Web.Models.Class", b =>
+            modelBuilder.Entity("FaceAttendance.Web.Models.ClassRoom", b =>
                 {
                     b.Property<int>("ClassID")
                         .ValueGeneratedOnAdd()
@@ -100,7 +100,7 @@ namespace FaceAttendance.Web.Migrations
                     b.HasIndex("ClassName")
                         .IsUnique();
 
-                    b.ToTable("Classes");
+                    b.ToTable("ClassRooms");
                 });
 
             modelBuilder.Entity("FaceAttendance.Web.Models.ClassStudent", b =>
@@ -144,6 +144,48 @@ namespace FaceAttendance.Web.Migrations
                     b.ToTable("FaceEmbeddings");
                 });
 
+            modelBuilder.Entity("FaceAttendance.Web.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Quản trị viên toàn quyền hệ thống",
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Giảng viên quản lý lớp học",
+                            Name = "Teacher"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Sinh viên",
+                            Name = "Student"
+                        });
+                });
+
             modelBuilder.Entity("FaceAttendance.Web.Models.Student", b =>
                 {
                     b.Property<string>("StudentID")
@@ -167,6 +209,73 @@ namespace FaceAttendance.Web.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("FaceAttendance.Web.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Avatar")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResetPasswordToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetPasswordTokenExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("VerificationToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VerificationTokenExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("FaceAttendance.Web.Models.AttendanceRecord", b =>
                 {
                     b.HasOne("FaceAttendance.Web.Models.AttendanceSession", "Session")
@@ -188,18 +297,18 @@ namespace FaceAttendance.Web.Migrations
 
             modelBuilder.Entity("FaceAttendance.Web.Models.AttendanceSession", b =>
                 {
-                    b.HasOne("FaceAttendance.Web.Models.Class", "Class")
+                    b.HasOne("FaceAttendance.Web.Models.ClassRoom", "ClassRoom")
                         .WithMany("AttendanceSessions")
                         .HasForeignKey("ClassID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Class");
+                    b.Navigation("ClassRoom");
                 });
 
             modelBuilder.Entity("FaceAttendance.Web.Models.ClassStudent", b =>
                 {
-                    b.HasOne("FaceAttendance.Web.Models.Class", "Class")
+                    b.HasOne("FaceAttendance.Web.Models.ClassRoom", "ClassRoom")
                         .WithMany("ClassStudents")
                         .HasForeignKey("ClassID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -211,7 +320,7 @@ namespace FaceAttendance.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Class");
+                    b.Navigation("ClassRoom");
 
                     b.Navigation("Student");
                 });
@@ -227,16 +336,32 @@ namespace FaceAttendance.Web.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("FaceAttendance.Web.Models.User", b =>
+                {
+                    b.HasOne("FaceAttendance.Web.Models.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("FaceAttendance.Web.Models.AttendanceSession", b =>
                 {
                     b.Navigation("Records");
                 });
 
-            modelBuilder.Entity("FaceAttendance.Web.Models.Class", b =>
+            modelBuilder.Entity("FaceAttendance.Web.Models.ClassRoom", b =>
                 {
                     b.Navigation("AttendanceSessions");
 
                     b.Navigation("ClassStudents");
+                });
+
+            modelBuilder.Entity("FaceAttendance.Web.Models.Role", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("FaceAttendance.Web.Models.Student", b =>

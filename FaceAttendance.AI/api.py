@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import numpy as np
 from keras_facenet import FaceNet
@@ -9,6 +10,14 @@ import os
 import urllib.request
 
 app = FastAPI(title="Face Recognition API Realtime (YuNet)")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Cho phép C# gọi vào
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 1. Hàm tự động tải Model YuNet của OpenCV (Siêu mượt, bắt góc nghiêng cực tốt)
 def load_yunet_model():

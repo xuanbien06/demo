@@ -1,0 +1,240 @@
+﻿@{
+    ViewData["Title"] = "Quản lý Khuôn mặt";
+    var student = ViewBag.Student as FaceAttendance.Web.Models.Student;
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="/Student/Index" class="btn btn-outline-secondary shadow-sm">
+        <i class="fa-solid fa-arrow-left me-2"></i>Quay lại
+    </a>
+    <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-face-viewfinder me-2"></i>Dataset Khuôn Mặt</h4>
+</div>
+
+<!-- Thông tin Sinh viên -->
+<div class="card border-0 shadow-sm mb-4 bg-white rounded">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 24px;">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+            <div class="col-md-10">
+                <h5 class="fw-bold text-dark mb-1">@student?.FullName</h5>
+                <p class="text-muted mb-0">Mã SV: <strong class="text-primary">@student?.StudentID</strong> | Khoa: <strong>@(student?.Faculty?.FacultyName ?? "N/A")</strong></p>
+                <input type="hidden" id="currentStudentId" value="@student?.StudentID" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Cột trái: Bộ điều khiển Upload / Camera -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded">
+            <div class="card-header bg-white fw-bold text-primary border-bottom-0 pt-3">
+                <i class="fa-solid fa-camera me-2"></i>Cập nhật khuôn mặt
+            </div>
+            <div class="card-body">
+                <!-- Tabs: Chọn File hoặc Webcam -->
+                <ul class="nav nav-pills nav-fill mb-3" id="uploadTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-pane" type="button" role="tab"><i class="fa-solid fa-upload me-1"></i>Tải ảnh</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cam-tab" data-bs-toggle="tab" data-bs-target="#cam-pane" type="button" role="tab"><i class="fa-solid fa-video me-1"></i>Webcam</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="uploadTabsContent">
+                    <!-- Tải File -->
+                    <div class="tab-pane fade show active" id="file-pane" role="tabpanel">
+                        <div class="mb-3">
+                            <input class="form-control" type="file" id="imageFile" accept="image/jpeg, image/png">
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="uploadFromFile()"><i class="fa-solid fa-cloud-arrow-up me-2"></i>Tải lên hệ thống</button>
+                    </div>
+
+                    <!-- Webcam -->
+                    <div class="tab-pane fade" id="cam-pane" role="tabpanel">
+                        <div class="position-relative bg-dark rounded mb-3 overflow-hidden" style="height: 250px;">
+                            <video id="webcamVideo" autoplay playsinline class="w-100 h-100 object-fit-cover"></video>
+                            <canvas id="webcamCanvas" class="d-none"></canvas>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success w-100" id="btnStartCam" onclick="startWebcam()"><i class="fa-solid fa-play me-1"></i>Mở Cam</button>
+                            <button class="btn btn-danger w-100 d-none" id="btnCapture" onclick="captureAndUpload()"><i class="fa-solid fa-camera me-1"></i>Chụp & Lưu</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Thư viện ảnh đã lưu -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded h-100">
+            <div class="card-header bg-white fw-bold text-primary border-bottom-0 pt-3 d-flex justify-content-between">
+                <span><i class="fa-solid fa-images me-2"></i>Thư viện ảnh Dataset</span>
+                <span class="badge bg-primary rounded-pill" id="imageCount">0 ảnh</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3" id="galleryContainer">
+                    <!-- Render ảnh qua AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const studentId = document.getElementById('currentStudentId').value;
+        const video = document.getElementById('webcamVideo');
+        const canvas = document.getElementById('webcamCanvas');
+        let stream = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadImages();
+
+            // Tắt camera khi chuyển tab để tiết kiệm tài nguyên
+            document.getElementById('file-tab').addEventListener('click', stopWebcam);
+        });
+
+        // ==========================================
+        // 1. QUẢN LÝ THƯ VIỆN ẢNH
+        // ==========================================
+        async function loadImages() {
+            try {
+                const res = await fetch(`/FaceAI/GetImages?studentId=${studentId}`);
+                const data = await res.json();
+
+                const container = document.getElementById('galleryContainer');
+                container.innerHTML = '';
+                document.getElementById('imageCount').innerText = `${data.data.length} ảnh`;
+
+                if (data.data.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fa-solid fa-folder-open fs-1 mb-2 opacity-50"></i><br/>Chưa có dữ liệu khuôn mặt</div>';
+                    return;
+                }
+
+                data.data.forEach(img => {
+                    const date = new Date(img.createdAt).toLocaleString('vi-VN');
+                    const html = `
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="card h-100 border-0 shadow-sm position-relative">
+                                <img src="${img.imagePath}" class="card-img-top object-fit-cover rounded" style="height: 150px;" alt="Face">
+                                <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle shadow" onclick="deleteImage(${img.id})" title="Xóa ảnh">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                <div class="card-footer bg-white border-0 p-2 text-center">
+                                    <small class="text-muted" style="font-size: 11px;">${date}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteImage(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa ảnh này khỏi hệ thống AI?")) {
+                try {
+                    const res = await fetch(`/FaceAI/DeleteFace?id=${id}`, { method: 'POST' });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        loadImages(); // Tải lại thư viện
+                    } else {
+                        Swal.fire('Lỗi', data.message, 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Lỗi', 'Không thể kết nối máy chủ', 'error');
+                }
+            }
+        }
+
+        // ==========================================
+        // 2. UPLOAD TỪ FILE
+        // ==========================================
+        async function uploadFromFile() {
+            const fileInput = document.getElementById('imageFile');
+            if (fileInput.files.length === 0) {
+                Swal.fire('Cảnh báo', 'Vui lòng chọn một file ảnh!', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('studentId', studentId);
+            formData.append('file', fileInput.files[0]);
+
+            await sendUploadRequest(formData);
+            fileInput.value = ''; // Reset input
+        }
+
+        // ==========================================
+        // 3. UPLOAD TỪ WEBCAM
+        // ==========================================
+        async function startWebcam() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                document.getElementById('btnStartCam').classList.add('d-none');
+                document.getElementById('btnCapture').classList.remove('d-none');
+            } catch (err) {
+                Swal.fire('Lỗi Camera', 'Không thể truy cập Webcam. Vui lòng cấp quyền!', 'error');
+            }
+        }
+
+        function stopWebcam() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                document.getElementById('btnStartCam').classList.remove('d-none');
+                document.getElementById('btnCapture').classList.add('d-none');
+            }
+        }
+
+        async function captureAndUpload() {
+            // Vẽ hình ảnh từ video sang thẻ canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Chuyển canvas thành base64
+            const base64Image = canvas.toDataURL('image/jpeg');
+
+            const formData = new FormData();
+            formData.append('studentId', studentId);
+            formData.append('base64Image', base64Image);
+
+            await sendUploadRequest(formData);
+        }
+
+        // Hàm gọi API chung cho cả File và Webcam
+        async function sendUploadRequest(formData) {
+            try {
+                // Hiện loading...
+                Swal.fire({ title: 'Đang xử lý AI...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+                const res = await fetch('/FaceAI/UploadFace', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                    loadImages(); // Cập nhật lại Grid ảnh
+                } else {
+                    Swal.fire('Lỗi', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống', 'Mất kết nối tới Server', 'error');
+            }
+        }
+    </script>
+}

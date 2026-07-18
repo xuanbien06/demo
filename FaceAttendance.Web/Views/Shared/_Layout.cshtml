@@ -312,6 +312,14 @@
             }
     </style>
 </head>
+@using System.Security.Claims
+
+@{
+    // Trích xuất thông tin User từ JWT Token đang lưu trong Context
+    var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "Khách";
+    var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Student";
+}
+
 <body>
     <div class="app-wrapper">
         <div class="app-background"></div>
@@ -335,23 +343,60 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="sidebar-menu">
                     <a href="/Home/Index" class="sidebar-item">
                         <i class="fa-solid fa-gauge"></i>
                         <span>Tổng quan</span>
                     </a>
-                    <a href="/Student/Index" class="sidebar-item">
-                        <i class="fa-solid fa-user-graduate"></i>
-                        <span>Quản lý Sinh viên</span>
-                    </a>
-                    <a href="/Class/Index" class="sidebar-item">
-                        <i class="fa-solid fa-chalkboard-user"></i>
-                        <span>Quản lý Lớp học</span>
-                    </a>
-                    <a href="/Attendance/Index" class="sidebar-item">
-                        <i class="fa-solid fa-camera"></i>
-                        <span>Điểm danh Camera</span>
-                    </a>
+
+                    @if (userRole == "Admin")
+                    {
+                        <a href="/User/Index" class="sidebar-item">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Quản lý Người dùng</span>
+                        </a>
+                        <a href="/Academic/Index" class="sidebar-item">
+                            <i class="fa-solid fa-sitemap"></i>
+                            <span>Quản lý Khoa</span>
+                        </a>
+                        <a href="/Term/Index" class="sidebar-item">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span>Thời gian Học thuật</span>
+                        </a>
+                        <a href="/Subject/Index" class="sidebar-item">
+                            <i class="fa-solid fa-book-open-reader"></i>
+                            <span>Quản lý Môn học</span>
+                        </a>
+                        <a href="/Student/Index" class="sidebar-item">
+                            <i class="fa-solid fa-user-graduate"></i>
+                            <span>Hồ sơ Sinh viên</span>
+                        </a>
+                        <a href="/Class/Index" class="sidebar-item">
+                            <i class="fa-solid fa-school"></i>
+                            <span>Quản lý Lớp học</span>
+                        </a>
+                    }
+
+                    @if (userRole == "Admin" || userRole == "Teacher")
+                    {
+                        <a href="/Attendance/Index" class="sidebar-item">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Điểm danh AI</span>
+                        </a>
+                    }
+
+                    @if (userRole == "Student")
+                    {
+                        <a href="/Student/MyAttendance" class="sidebar-item">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span>Lịch sử Điểm danh</span>
+                        </a>
+                        <a href="/LeaveRequest/Index" class="sidebar-item">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                            <span>Xin phép nghỉ</span>
+                        </a>
+                    }
                 </div>
             </aside>
 
@@ -368,9 +413,24 @@
                         <button class="toggle-btn me-2">
                             <i class="fa-solid fa-bell"></i>
                         </button>
-                        <div class="d-flex align-items-center ms-2" style="cursor: pointer;">
-                            <i class="fa-solid fa-user-circle fs-4 text-primary"></i>
-                            <span class="ms-2 fw-semibold text-dark">Giảng viên</span>
+
+                        <div class="dropdown">
+                            <div class="d-flex align-items-center ms-2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                                <i class="fa-solid fa-user-circle fs-4 text-primary"></i>
+                                <div class="ms-2 d-flex flex-column">
+                                    <span class="fw-semibold text-dark lh-1">@userName</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">@userRole</small>
+                                </div>
+                            </div>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                                <li><a class="dropdown-item py-2" href="#"><i class="fa-solid fa-id-card me-2 text-primary"></i>Hồ sơ cá nhân</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item py-2 text-danger" href="javascript:void(0)" onclick="logoutSystem()">
+                                        <i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </header>
@@ -385,23 +445,20 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+        // Logic Sidebar
         const sidebar = document.getElementById("sidebar");
         const toggleBtn = document.getElementById("toggleSidebar");
 
-        // Lắng nghe hành vi click và cập nhật trạng thái lưu trữ vào bộ nhớ cục bộ
         toggleBtn.addEventListener("click", function () {
         sidebar.classList.toggle("collapsed");
-        if (sidebar.classList.contains("collapsed")) {
-        localStorage.setItem("sidebarStatus", "collapsed");
-        } else {
-        localStorage.setItem("sidebarStatus", "expanded");
-        }
+        localStorage.setItem("sidebarStatus", sidebar.classList.contains("collapsed") ? "collapsed" : "expanded");
         });
 
-        // Tự động rà soát tuyến đường URL để bật sáng menu tương ứng
+        // Logic Active Menu
         const currentPath = window.location.pathname.toLowerCase();
         const navItems = document.querySelectorAll(".sidebar-item");
 
@@ -412,6 +469,31 @@
         }
         });
         });
+
+        // Hàm Đăng xuất
+        async function logoutSystem() {
+        Swal.fire({
+        title: 'Bạn muốn đăng xuất?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Đăng xuất',
+        cancelButtonText: 'Hủy'
+        }).then(async (result) => {
+        if (result.isConfirmed) {
+        try {
+        // Gọi API để xóa HttpOnly Cookie
+        const response = await fetch('/Auth/Logout', { method: 'POST' });
+        if (response.ok) {
+        window.location.href = '/Auth/Login'; // Chuyển về trang đăng nhập
+        }
+        } catch (err) {
+        console.error(err);
+        }
+        }
+        });
+        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

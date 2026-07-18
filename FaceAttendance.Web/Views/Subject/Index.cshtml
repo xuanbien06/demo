@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Quản lý Môn học";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-book-open-reader me-2"></i>Danh mục Môn học</h4>
+    <button class="btn btn-primary shadow-sm" onclick="openModal()">
+        <i class="fa-solid fa-plus me-2"></i>Thêm Môn học
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>STT</th>
+                <th class="text-start">Mã Môn</th>
+                <th class="text-start">Tên Môn Học</th>
+                <th>Số Tín Chỉ</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody" class="text-center">
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="subjectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thêm Môn Học</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="subjectForm">
+                    <input type="hidden" id="subjectId" value="0" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mã Môn Học</label>
+                        <input type="text" class="form-control bg-light text-uppercase" id="subjectCode" placeholder="VD: PRJ301" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên Môn Học</label>
+                        <input type="text" class="form-control bg-light" id="subjectName" placeholder="Nhập tên môn..." required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số Tín Chỉ</label>
+                        <input type="number" class="form-control bg-light" id="credits" min="1" max="10" value="3" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" onclick="saveSubject()">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Lưu thông tin
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let subjectModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Nhấc Modal ra ngoài cùng của Body
+            document.body.appendChild(document.getElementById('subjectModal'));
+            subjectModal = new bootstrap.Modal(document.getElementById('subjectModal'));
+            loadSubjects();
+        });
+
+        // Tải danh sách môn học
+        async function loadSubjects() {
+            try {
+                const response = await fetch('/Subject/GetAll');
+                const data = await response.json();
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                data.data.forEach((subject, index) => {
+                    const tr = `
+                        <tr>
+                            <td class="fw-bold text-muted">${index + 1}</td>
+                            <td class="fw-bold text-primary text-start">${subject.subjectCode}</td>
+                            <td class="text-start fw-semibold">${subject.subjectName}</td>
+                            <td><span class="badge bg-secondary px-3 py-2 fs-6">${subject.credits} TC</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2 shadow-sm" onclick="openModal(${subject.id}, '${subject.subjectCode}', '${subject.subjectName}', ${subject.credits})" title="Chỉnh sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="deleteSubject(${subject.id})" title="Xóa môn học">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', tr);
+                });
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải danh sách dữ liệu', 'error');
+            }
+        }
+
+        function openModal(id = 0, code = '', name = '', credits = 3) {
+            document.getElementById('subjectId').value = id;
+            document.getElementById('subjectCode').value = code;
+            document.getElementById('subjectName').value = name;
+            document.getElementById('credits').value = credits;
+
+            document.getElementById('modalTitle').innerText = id === 0 ? 'Thêm Môn Học Mới' : 'Cập nhật Môn Học';
+            subjectModal.show();
+        }
+
+        async function saveSubject() {
+            const form = document.getElementById('subjectForm');
+            if (!form.reportValidity()) return;
+
+            const payload = {
+                id: parseInt(document.getElementById('subjectId').value),
+                subjectCode: document.getElementById('subjectCode').value,
+                subjectName: document.getElementById('subjectName').value,
+                credits: parseInt(document.getElementById('credits').value)
+            };
+
+            try {
+                const response = await fetch('/Subject/Save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                    subjectModal.hide();
+                    loadSubjects();
+                } else {
+                    Swal.fire('Lỗi!', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống!', 'Mất kết nối tới Server.', 'error');
+            }
+        }
+
+        async function deleteSubject(id) {
+            Swal.fire({
+                title: 'Bạn chắc chắn muốn xóa?',
+                text: "Hành động này không thể hoàn tác!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Xóa ngay',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/Subject/Delete?id=${id}`, { method: 'POST' });
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            Swal.fire('Đã xóa', data.message, 'success');
+                            loadSubjects();
+                        } else {
+                            Swal.fire('Thất bại', data.message, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi', 'Không thể kết nối với máy chủ', 'error');
+                    }
+                }
+            });
+        }
+    </script>
+}

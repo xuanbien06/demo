@@ -1,86 +1,249 @@
-﻿@using FaceAttendance.Web.Models
-@model IEnumerable<Student>
-@{
-    ViewData["Title"] = "Quản lý Sinh viên";
+﻿@{
+    ViewData["Title"] = "Hồ sơ Sinh viên";
 }
 
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-2 align-items-center">
-            <div class="col-md-10">
-                <input type="text" name="searchString" class="form-control"
-                       placeholder="Nhập Mã sinh viên hoặc Họ tên (VD: BIT240041, Nguyễn Văn A, Lại Xuân Biển...)"
-                       value="@ViewBag.SearchString" />
-            </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
-                <a asp-action="Index" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i></a>
-            </div>
-        </form>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-user-graduate me-2"></i>Quản lý Sinh viên</h4>
+    <button class="btn btn-primary shadow-sm" onclick="openModal()">
+        <i class="fa-solid fa-plus me-2"></i>Thêm Sinh viên
+    </button>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="m-0">Danh sách Sinh viên</h5>
-        <div>
-            <a href="/Student/Create" class="btn btn-success btn-sm fw-bold">
-                <i class="fa-solid fa-plus"></i> Thêm Sinh viên
-            </a>
+<div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>STT</th>
+                <th class="text-start">Mã SV</th>
+                <th class="text-start">Họ và Tên</th>
+                <th class="text-start">Khoa & Khóa học</th>
+                <th>Trạng Thái</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody" class="text-center">
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thêm Sinh viên</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="studentForm">
+                    <input type="hidden" id="isEditMode" value="false" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Mã Sinh Viên</label>
+                            <input type="text" class="form-control bg-light text-uppercase fw-bold" id="studentId" placeholder="VD: SE150123" required>
+                            <small class="text-danger d-none" id="studentIdWarning">Không thể sửa Mã sinh viên khi cập nhật.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Họ và Tên</label>
+                            <input type="text" class="form-control bg-light" id="fullName" placeholder="Nguyễn Văn A" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email truy cập</label>
+                        <input type="email" class="form-control bg-light" id="email" placeholder="name@domain.com" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Khoa (Faculty)</label>
+                            <select class="form-select bg-light" id="facultyId">
+                                <option value="">-- Chọn Khoa --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Khóa học (Academic Year)</label>
+                            <select class="form-select bg-light" id="academicYearId">
+                                <option value="">-- Chọn Khóa --</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" onclick="saveStudent()">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Lưu thông tin
+                </button>
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <table class="table table-bordered table-striped table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th style="width: 15%">Mã SV</th>
-                    <th>Họ và Tên</th>
-                    <th>Email</th>
-                    <th class="text-center" style="width: 12%">Trạng thái</th>
-                    <th class="text-center" style="width: 12%">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="text-center text-danger fw-bold py-4">
-                            Không tìm thấy sinh viên.
-                        </td>
-                    </tr>
-                }
-                else
-                {
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td class="fw-bold text-primary">@item.StudentID</td>
-                            <td class="fw-semibold">@item.FullName</td>
-                            <td>@item.Email</td>
-                            <td class="text-center">
-                                @if (item.IsActive)
-                                {
-                                    <span class="badge bg-success py-2 px-3">Đang học</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger py-2 px-3">Bảo lưu</span>
-                                }
-                            </td>
-                            <td class="text-center">
-                                <a href="/Student/Edit/@item.StudentID" class="btn btn-warning btn-sm shadow-sm" title="Sửa thông tin">
-                                    <i class="fa-solid fa-pen"></i>
-                                </a>
+</div>
 
-                                <a href="/Student/Delete/@item.StudentID" class="btn btn-danger btn-sm shadow-sm" title="Xóa sinh viên"
-                                   onclick="return confirm('Bạn có chắc chắn muốn xóa sinh viên @item.FullName không?\nDữ liệu khuôn mặt cũng sẽ bị xóa vĩnh viễn!');">
-                                    <i class="fa-solid fa-trash"></i>
+@section Scripts {
+    <script>
+        let studentModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(document.getElementById('studentModal'));
+            studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+            loadDropdownData();
+            loadStudents();
+        });
+
+        // Tải dữ liệu Khoa và Khóa
+        async function loadDropdownData() {
+            try {
+                const res = await fetch('/Student/GetDropdownData');
+                const data = await res.json();
+
+                const facultySelect = document.getElementById('facultyId');
+                const yearSelect = document.getElementById('academicYearId');
+
+                data.faculties.forEach(f => facultySelect.insertAdjacentHTML('beforeend', `<option value="${f.id}">${f.facultyName}</option>`));
+                data.years.forEach(y => yearSelect.insertAdjacentHTML('beforeend', `<option value="${y.id}">${y.yearName}</option>`));
+            } catch (e) {
+                console.error("Lỗi tải dropdown:", e);
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                const res = await fetch('/Student/GetAll');
+                const data = await res.json();
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                data.data.forEach((s, index) => {
+                    const statusBadge = s.isActive
+                        ? `<span class="badge bg-success bg-opacity-10 text-success border border-success">Hoạt động</span>`
+                        : `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Đã khóa</span>`;
+
+                    const lockIcon = s.isActive ? 'fa-lock' : 'fa-unlock';
+                    const lockClass = s.isActive ? 'btn-outline-danger' : 'btn-outline-success';
+                    const lockTitle = s.isActive ? 'Khóa hồ sơ' : 'Mở khóa hồ sơ';
+
+                    const tr = `
+                        <tr>
+                            <td class="fw-bold text-muted">${index + 1}</td>
+                            <td class="fw-bold text-primary text-start text-uppercase">${s.studentID}</td>
+                            <td class="text-start fw-semibold">
+                                ${s.fullName}<br/>
+                                <small class="text-muted fw-normal">${s.email}</small>
+                            </td>
+                            <td class="text-start">
+                                <span class="badge bg-info text-dark mb-1">${s.facultyName}</span><br/>
+                                <span class="badge bg-secondary">${s.yearName}</span>
+                            </td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <a href="/FaceAI/Dataset?studentId=${s.studentID}" class="btn btn-sm btn-outline-info shadow-sm me-1" title="Cập nhật khuôn mặt">
+                                    <i class="fa-solid fa-face-smile"></i>
                                 </a>
+                                <button class="btn btn-sm btn-outline-primary shadow-sm me-1" onclick="openModal(true, '${s.studentID}', '${s.fullName}', '${s.email}', ${s.facultyId || "''"}, ${s.academicYearId || "''"})" title="Chỉnh sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="btn btn-sm ${lockClass} shadow-sm" onclick="toggleStatus('${s.studentID}')" title="${lockTitle}">
+                                    <i class="fa-solid ${lockIcon}"></i>
+                                </button>
                             </td>
                         </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', tr);
+                });
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải danh sách sinh viên', 'error');
+            }
+        }
+
+        function openModal(isEdit = false, id = '', name = '', email = '', facultyId = '', yearId = '') {
+            document.getElementById('isEditMode').value = isEdit;
+
+            const studentIdInput = document.getElementById('studentId');
+            const warningText = document.getElementById('studentIdWarning');
+
+            studentIdInput.value = id;
+            document.getElementById('fullName').value = name;
+            document.getElementById('email').value = email;
+            document.getElementById('facultyId').value = facultyId;
+            document.getElementById('academicYearId').value = yearId;
+
+            if (isEdit) {
+                document.getElementById('modalTitle').innerText = 'Cập nhật Sinh viên';
+                studentIdInput.readOnly = true;
+                studentIdInput.classList.add('bg-secondary', 'text-white');
+                warningText.classList.remove('d-none');
+            } else {
+                document.getElementById('modalTitle').innerText = 'Thêm Sinh viên Mới';
+                studentIdInput.readOnly = false;
+                studentIdInput.classList.remove('bg-secondary', 'text-white');
+                warningText.classList.add('d-none');
+            }
+
+            studentModal.show();
+        }
+
+        async function saveStudent() {
+            if (!document.getElementById('studentForm').reportValidity()) return;
+
+            const facultyVal = document.getElementById('facultyId').value;
+            const yearVal = document.getElementById('academicYearId').value;
+
+            const payload = {
+                isEditMode: document.getElementById('isEditMode').value === 'true',
+                studentID: document.getElementById('studentId').value,
+                fullName: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                facultyId: facultyVal ? parseInt(facultyVal) : null,
+                academicYearId: yearVal ? parseInt(yearVal) : null
+            };
+
+            try {
+                const res = await fetch('/Student/Save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                    studentModal.hide();
+                    loadStudents();
+                } else {
+                    Swal.fire('Lỗi!', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống!', 'Mất kết nối tới Server.', 'error');
+            }
+        }
+
+        async function toggleStatus(id) {
+            Swal.fire({
+                title: 'Xác nhận thay đổi?',
+                text: "Trạng thái hoạt động của sinh viên này sẽ thay đổi!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`/Student/ToggleStatus?id=${id}`, { method: 'POST' });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                            loadStudents();
+                        } else {
+                            Swal.fire('Thất bại', data.message, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi', 'Không thể kết nối máy chủ', 'error');
                     }
                 }
-            </tbody>
-        </table>
-    </div>
-</div>
+            });
+        }
+    </script>
+}

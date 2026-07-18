@@ -1,242 +1,118 @@
-﻿// Đường dẫn: FaceAttendance.Web/Controllers/StudentController.cs
-using FaceAttendance.Web.Data;
+﻿using FaceAttendance.Web.Data;
+using FaceAttendance.Web.DTOs;
 using FaceAttendance.Web.Models;
-using FaceAttendance.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FaceAttendance.Web.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class StudentController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly FaceRecognitionService _faceService;
-        private readonly FaceCacheService _cacheService;
 
-        public StudentController(AppDbContext context, FaceRecognitionService faceService, FaceCacheService cacheService)
+        public StudentController(AppDbContext context)
         {
             _context = context;
-            _faceService = faceService;
-            _cacheService = cacheService;
         }
 
-        // ==========================================
-        // YÊU CẦU 5: CẬP NHẬT TÌM KIẾM CHO HÀM INDEX
-        // ==========================================
-        [HttpGet]
-        public IActionResult Index(string searchString)
-        {
-            // Đưa từ khóa vào ViewBag để hiển thị lại trên Form
-            ViewBag.SearchString = searchString;
-
-            // Chuyển sang IQueryable để tối ưu truy vấn Database
-            var query = _context.Students.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                // Lọc theo Mã sinh viên HOẶC Họ tên
-                query = query.Where(s => s.StudentID.Contains(searchString) || s.FullName.Contains(searchString));
-            }
-
-            // Thực thi truy vấn và trả về View
-            var students = query.ToList();
-            return View(students);
-        }
-
-        [HttpGet]
-        public IActionResult Create()
+        public IActionResult Index()
         {
             return View();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(Student student, IFormFile faceImage)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            try
+            var students = await _context.Students
+                .Include(s => s.Faculty) // Sửa thành Include Faculty
+                .Include(s => s.AcademicYear)
+                .Select(s => new {
+                    s.StudentID,
+                    s.FullName,
+                    s.Email,
+                    s.IsActive,
+                    FacultyId = s.FacultyId,
+                    FacultyName = s.Faculty != null ? s.Faculty.FacultyName : "Chưa xếp Khoa", // Sửa thành FacultyName
+                    AcademicYearId = s.AcademicYearId,
+                    YearName = s.AcademicYear != null ? s.AcademicYear.YearName : "Chưa xếp Khóa"
+                })
+                .OrderByDescending(s => s.StudentID)
+                .ToListAsync();
+
+            return Json(new { data = students });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDropdownData()
+        {
+            // Sửa thành lấy danh sách Khoa (Faculties)
+            var faculties = await _context.Faculties.Select(f => new { f.Id, f.FacultyName }).ToListAsync();
+            var years = await _context.AcademicYears.Select(y => new { y.Id, y.YearName }).ToListAsync();
+            return Json(new { faculties, years });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Save([FromBody] StudentDTO model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { message = "Dữ liệu không hợp lệ!" });
+
+            bool isEmailExist = await _context.Students
+                .AnyAsync(s => s.Email.ToLower() == model.Email.ToLower() && s.StudentID != model.StudentID);
+            if (isEmailExist)
+                return BadRequest(new { message = "Email này đã được sử dụng bởi sinh viên khác!" });
+
+            if (!model.IsEditMode)
             {
-                student.IsActive = true;
+                bool isIdExist = await _context.Students.AnyAsync(s => s.StudentID.ToUpper() == model.StudentID.ToUpper());
+                if (isIdExist)
+                    return BadRequest(new { message = $"Mã sinh viên '{model.StudentID}' đã tồn tại!" });
+
+                var student = new Student
+                {
+                    StudentID = model.StudentID.ToUpper(),
+                    FullName = model.FullName,
+                    Email = model.Email,
+                    FacultyId = model.FacultyId, // Sửa thành FacultyId
+                    AcademicYearId = model.AcademicYearId,
+                    IsActive = true
+                };
+
                 _context.Students.Add(student);
                 await _context.SaveChangesAsync();
-
-                if (faceImage != null && faceImage.Length > 0)
-                {
-                    var facesResult = await _faceService.GetFaceEmbeddingAsync(faceImage);
-
-                    if (facesResult != null && facesResult.Count > 0)
-                    {
-                        List<float> vector = facesResult[0].Vector;
-                        string vectorJson = System.Text.Json.JsonSerializer.Serialize(vector);
-
-                        var embeddingRecord = new FaceEmbedding
-                        {
-                            StudentID = student.StudentID,
-                            VectorData = vectorJson,
-                            CreatedAt = DateTime.Now
-                        };
-
-                        _context.FaceEmbeddings.Add(embeddingRecord);
-                        await _context.SaveChangesAsync();
-
-                        await _cacheService.LoadFacesIntoMemoryAsync();
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "AI không tìm thấy khuôn mặt nào trong ảnh đăng ký. Vui lòng chụp lại ảnh rõ hơn.");
-                        return View(student);
-                    }
-                }
-
-                return RedirectToAction("Index");
+                return Ok(new { success = true, message = "Thêm sinh viên thành công!" });
             }
-            catch (Exception ex)
+            else
             {
-                ModelState.AddModelError("", "Đã xảy ra lỗi: " + ex.Message);
-                return View(student);
+                var student = await _context.Students.FindAsync(model.StudentID);
+                if (student == null)
+                    return NotFound(new { message = "Không tìm thấy Sinh viên!" });
+
+                student.FullName = model.FullName;
+                student.Email = model.Email;
+                student.FacultyId = model.FacultyId; // Sửa thành FacultyId
+                student.AcademicYearId = model.AcademicYearId;
+
+                _context.Students.Update(student);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, message = "Cập nhật sinh viên thành công!" });
             }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return NotFound();
-
-            var student = await _context.Students.FindAsync(id);
-            if (student == null) return NotFound();
-
-            return View(student);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(string oldStudentID, Student student, IFormFile faceImage)
+        public async Task<IActionResult> ToggleStatus(string id)
         {
-            try
-            {
-                bool needReloadCache = false;
-
-                if (oldStudentID != student.StudentID)
-                {
-                    var checkExist = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.StudentID == student.StudentID);
-                    if (checkExist != null)
-                    {
-                        ModelState.AddModelError("", "Mã sinh viên mới đã tồn tại, vui lòng chọn mã khác!");
-                        return View(student);
-                    }
-
-                    var oldStudent = await _context.Students.FindAsync(oldStudentID);
-                    var oldFace = await _context.FaceEmbeddings.FirstOrDefaultAsync(f => f.StudentID == oldStudentID);
-
-                    if (oldFace != null) _context.FaceEmbeddings.Remove(oldFace);
-                    if (oldStudent != null) _context.Students.Remove(oldStudent);
-                    await _context.SaveChangesAsync();
-
-                    _context.Students.Add(student);
-                    await _context.SaveChangesAsync();
-
-                    if (oldFace != null && (faceImage == null || faceImage.Length == 0))
-                    {
-                        var copyFace = new FaceEmbedding
-                        {
-                            StudentID = student.StudentID,
-                            VectorData = oldFace.VectorData,
-                            CreatedAt = oldFace.CreatedAt
-                        };
-                        _context.FaceEmbeddings.Add(copyFace);
-                        await _context.SaveChangesAsync();
-                    }
-
-                    needReloadCache = true;
-                }
-                else
-                {
-                    _context.Students.Update(student);
-                    await _context.SaveChangesAsync();
-                    needReloadCache = true;
-                }
-
-                if (faceImage != null && faceImage.Length > 0)
-                {
-                    var facesResult = await _faceService.GetFaceEmbeddingAsync(faceImage);
-
-                    if (facesResult != null && facesResult.Count > 0)
-                    {
-                        List<float> newVector = facesResult[0].Vector;
-                        string vectorJson = System.Text.Json.JsonSerializer.Serialize(newVector);
-
-                        var currentFace = await _context.FaceEmbeddings.FirstOrDefaultAsync(f => f.StudentID == student.StudentID);
-
-                        if (currentFace != null)
-                        {
-                            currentFace.VectorData = vectorJson;
-                            currentFace.CreatedAt = DateTime.Now;
-                            _context.FaceEmbeddings.Update(currentFace);
-                        }
-                        else
-                        {
-                            var newFace = new FaceEmbedding
-                            {
-                                StudentID = student.StudentID,
-                                VectorData = vectorJson,
-                                CreatedAt = DateTime.Now
-                            };
-                            _context.FaceEmbeddings.Add(newFace);
-                        }
-                        await _context.SaveChangesAsync();
-                        needReloadCache = true;
-                    }
-                }
-
-                if (needReloadCache)
-                {
-                    await _cacheService.LoadFacesIntoMemoryAsync();
-                }
-
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "Lỗi khi lưu: " + ex.Message);
-                return View(student);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return NotFound();
-
             var student = await _context.Students.FindAsync(id);
-            if (student != null)
-            {
-                // 1. Xóa dữ liệu khuôn mặt (như code cũ của bạn)
-                var faceData = _context.FaceEmbeddings.FirstOrDefault(f => f.StudentID == id);
-                if (faceData != null)
-                {
-                    _context.FaceEmbeddings.Remove(faceData);
-                }
+            if (student == null)
+                return NotFound(new { message = "Không tìm thấy Sinh viên!" });
 
-                // 2. Xóa các bản ghi điểm danh của sinh viên này
-                var attendanceRecords = _context.AttendanceRecords.Where(a => a.StudentID == id).ToList();
-                if (attendanceRecords.Any())
-                {
-                    _context.AttendanceRecords.RemoveRange(attendanceRecords);
-                }
+            student.IsActive = !student.IsActive;
+            await _context.SaveChangesAsync();
 
-                // 3. Xóa sinh viên này khỏi các lớp học đã tham gia
-                var classStudents = _context.ClassStudents.Where(cs => cs.StudentID == id).ToList();
-                if (classStudents.Any())
-                {
-                    _context.ClassStudents.RemoveRange(classStudents);
-                }
-
-                // 4. Cuối cùng mới được xóa sinh viên
-                _context.Students.Remove(student);
-
-                // Lưu thay đổi vào DB
-                await _context.SaveChangesAsync();
-                await _cacheService.LoadFacesIntoMemoryAsync();
-            }
-
-            return RedirectToAction("Index");
+            var msg = student.IsActive ? "Đã MỞ KHÓA sinh viên!" : "Đã KHÓA sinh viên!";
+            return Ok(new { success = true, message = msg });
         }
     }
 }

@@ -1,0 +1,163 @@
+﻿@{
+    ViewData["Title"] = "Quản lý Khoa";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-building-columns me-2"></i>Danh sách Khoa</h4>
+    <button class="btn btn-primary shadow-sm" onclick="openFacultyModal()">
+        <i class="fa-solid fa-plus me-2"></i>Thêm Khoa
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>STT</th>
+                <th class="text-start">Tên Khoa</th>
+                <th class="text-start">Mô tả</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="facultyTableBody" class="text-center">
+            <!-- Dữ liệu render ngầm qua AJAX -->
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL KHOA -->
+<div class="modal fade" id="facultyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="facultyModalTitle">Thêm Khoa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="facultyForm">
+                    <input type="hidden" id="facultyId" value="0" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên Khoa</label>
+                        <input type="text" class="form-control bg-light" id="facultyName" placeholder="VD: Khoa Công nghệ thông tin" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả</label>
+                        <textarea class="form-control bg-light" id="facultyDesc" rows="3" placeholder="Nhập mô tả ngắn..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" onclick="saveFaculty()">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Lưu lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let facultyModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(document.getElementById('facultyModal'));
+            facultyModal = new bootstrap.Modal(document.getElementById('facultyModal'));
+            loadFaculties();
+        });
+
+        // ====== XỬ LÝ KHOA ======
+        async function loadFaculties() {
+            try {
+                const res = await fetch('/Academic/GetFaculties');
+                const data = await res.json();
+
+                const tbody = document.getElementById('facultyTableBody');
+                tbody.innerHTML = '';
+
+                data.data.forEach((f, i) => {
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td class="fw-bold text-muted">${i + 1}</td>
+                            <td class="fw-bold text-primary text-start">${f.facultyName}</td>
+                            <td class="text-start text-muted">${f.description || 'Không có mô tả'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2 shadow-sm" onclick="openFacultyModal(${f.id}, '${f.facultyName}', '${f.description || ''}')" title="Chỉnh sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="deleteFaculty(${f.id})" title="Xóa Khoa">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải danh sách dữ liệu', 'error');
+            }
+        }
+
+        function openFacultyModal(id = 0, name = '', desc = '') {
+            document.getElementById('facultyId').value = id;
+            document.getElementById('facultyName').value = name;
+            document.getElementById('facultyDesc').value = desc;
+            document.getElementById('facultyModalTitle').innerText = id === 0 ? 'Thêm Khoa Mới' : 'Cập nhật Khoa';
+            facultyModal.show();
+        }
+
+        async function saveFaculty() {
+            if (!document.getElementById('facultyForm').reportValidity()) return;
+            const payload = {
+                id: parseInt(document.getElementById('facultyId').value),
+                facultyName: document.getElementById('facultyName').value,
+                description: document.getElementById('facultyDesc').value
+            };
+
+            try {
+                const res = await fetch('/Academic/SaveFaculty', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    facultyModal.hide();
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1500, showConfirmButton: false });
+                    loadFaculties();
+                } else {
+                    Swal.fire('Lỗi', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống!', 'Mất kết nối tới Server.', 'error');
+            }
+        }
+
+        async function deleteFaculty(id) {
+            Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: "Bạn có chắc chắn muốn xóa Khoa này không?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Đồng ý xóa',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`/Academic/DeleteFaculty?id=${id}`, { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            Swal.fire('Đã xóa', data.message, 'success');
+                            loadFaculties();
+                        } else {
+                            Swal.fire('Không thể xóa', data.message, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi', 'Không thể kết nối với máy chủ', 'error');
+                    }
+                }
+            });
+        }
+    </script>
+}

@@ -22,6 +22,8 @@ builder.Services.AddScoped<FaceAttendance.Web.Repositories.IStudentRepository, F
 builder.Services.AddScoped<FaceAttendance.Web.Services.IStudentService, FaceAttendance.Web.Services.StudentService>();
 builder.Services.AddScoped<FaceAttendance.Web.Repositories.IFaceEmbeddingRepository, FaceAttendance.Web.Repositories.FaceEmbeddingRepository>();
 builder.Services.AddScoped<FaceAttendance.Web.Services.IAttendanceService, FaceAttendance.Web.Services.AttendanceService>();
+
+builder.Services.AddScoped<FaceAttendance.Web.Services.IAuthService, FaceAttendance.Web.Services.AuthService>();
 // Đăng ký FaceCacheService như là một Singleton (Tồn tại duy nhất 1 bản sao trên RAM suốt vòng đời app)
 builder.Services.AddSingleton<FaceAttendance.Web.Services.FaceCacheService>();
 
@@ -34,12 +36,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true, // Có kiểm tra người phát hành
-            ValidateAudience = false, // Tắt kiểm tra người nhận (cho đơn giản)
-            ValidateLifetime = true, // Token có hạn sử dụng không
-            ValidateIssuerSigningKey = true, // Có kiểm tra chữ ký không
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            // Lấy Token từ Cookie
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies["jwt_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            },
+            // BẢN VÁ QUAN TRỌNG: Xử lý khi chưa đăng nhập (401 Unauthorized)
+            OnChallenge = context =>
+            {
+                // Bỏ qua phản hồi 401 mặc định của API
+                context.HandleResponse();
+                // Chuyển hướng người dùng về trang Login
+                context.Response.Redirect("/Auth/Login");
+                return Task.CompletedTask;
+            }
         };
     });
 

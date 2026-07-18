@@ -1,0 +1,247 @@
+﻿@{
+    ViewData["Title"] = "Quản lý Người dùng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-users-gear me-2"></i>Danh sách Tài khoản</h4>
+    <button class="btn btn-primary shadow-sm" onclick="openCreateModal()">
+        <i class="fa-solid fa-plus me-2"></i>Thêm tài khoản
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>STT</th>
+                <th class="text-start">Họ Tên</th>
+                <th class="text-start">Email</th>
+                <th>Phân Quyền</th>
+                <th>Trạng Thái</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody" class="text-center">
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thêm người dùng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="userForm">
+                    <input type="hidden" id="userId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và Tên</label>
+                        <input type="text" class="form-control bg-light" id="fullName" placeholder="Nhập họ tên đầy đủ..." required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email truy cập</label>
+                        <input type="email" class="form-control bg-light" id="email" placeholder="name@domain.com" required>
+                    </div>
+
+                    <div class="mb-3" id="passwordGroup">
+                        <label class="form-label fw-semibold">Mật khẩu</label>
+                        <input type="password" class="form-control bg-light" id="password" minlength="6" placeholder="******">
+                        <small class="text-muted fst-italic">Tối thiểu 6 ký tự.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phân Quyền (Role)</label>
+                        <select class="form-select bg-light" id="roleId" required>
+                            @foreach (var role in ViewBag.Roles)
+                            {
+                                <option value="@role.Id">@role.Name</option>
+                            }
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" onclick="saveUser()">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Lưu thông tin
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let userModal;
+        let isEditMode = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(document.getElementById('userModal'));
+            // Khởi tạo Modal của Bootstrap
+            userModal = new bootstrap.Modal(document.getElementById('userModal'));
+            loadUsers(); // Nạp dữ liệu ngay khi vào trang
+        });
+
+        // Hàm gọi API lấy danh sách User
+        async function loadUsers() {
+            try {
+                const response = await fetch('/User/GetAll');
+                const data = await response.json();
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = ''; // Xóa sạch dữ liệu cũ
+
+                data.data.forEach((user, index) => {
+                    // Xử lý huy hiệu Trạng thái
+                    const statusBadge = user.isActive
+                        ? `<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Hoạt động</span>`
+                        : `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1">Đã khóa</span>`;
+
+                    // Xử lý màu sắc, icon nút Khóa
+                    const lockIcon = user.isActive ? 'fa-lock' : 'fa-unlock';
+                    const lockClass = user.isActive ? 'btn-outline-danger' : 'btn-outline-success';
+                    const lockTitle = user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản';
+
+                    // Vẽ dòng HTML ngầm
+                    const tr = `
+                        <tr>
+                            <td class="fw-bold text-muted">${index + 1}</td>
+                            <td class="fw-semibold text-dark text-start">${user.fullName}</td>
+                            <td class="text-start">${user.email}</td>
+                            <td><span class="badge bg-primary rounded-pill px-3">${user.roleName}</span></td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2 shadow-sm" onclick="openEditModal(${user.id}, '${user.fullName}', '${user.email}', ${user.roleId})" title="Chỉnh sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="btn btn-sm ${lockClass} shadow-sm" onclick="toggleStatus(${user.id})" title="${lockTitle}">
+                                    <i class="fa-solid ${lockIcon}"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', tr);
+                });
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải danh sách dữ liệu', 'error');
+            }
+        }
+
+        // Mở form Thêm mới
+        function openCreateModal() {
+            isEditMode = false;
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('modalTitle').innerText = 'Thêm Người Dùng Mới';
+
+            // Bắt buộc nhập mật khẩu khi tạo mới
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('password').required = true;
+
+            userModal.show();
+        }
+
+        // Mở form Cập nhật
+        function openEditModal(id, fullName, email, roleId) {
+            isEditMode = true;
+            document.getElementById('userId').value = id;
+            document.getElementById('fullName').value = fullName;
+            document.getElementById('email').value = email;
+            document.getElementById('roleId').value = roleId;
+            document.getElementById('modalTitle').innerText = 'Chỉnh Sửa Thông Tin';
+
+            // Khi Edit không cho phép đổi password ở form này (Làm tính năng Reset Password riêng sau)
+            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('password').required = false;
+
+            userModal.show();
+        }
+
+        // Lưu dữ liệu (Gọi API POST)
+        async function saveUser() {
+            // Validate form cơ bản
+            const form = document.getElementById('userForm');
+            if (!form.reportValidity()) return;
+
+            const url = isEditMode ? '/User/Edit' : '/User/Create';
+            const payload = {
+                fullName: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                roleId: parseInt(document.getElementById('roleId').value)
+            };
+
+            // Gắn thêm ID hoặc Password tùy theo chế độ
+            if (isEditMode) {
+                payload.id = parseInt(document.getElementById('userId').value);
+            } else {
+                payload.password = document.getElementById('password').value;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: data.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    userModal.hide(); // Đóng Modal
+                    loadUsers(); // Load lại bảng ngầm mà không giật trang
+                } else {
+                    Swal.fire('Lỗi!', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi hệ thống!', 'Mất kết nối tới Server.', 'error');
+            }
+        }
+
+        // Thay đổi trạng thái Khóa / Mở Khóa
+        function toggleStatus(id) {
+            Swal.fire({
+                title: 'Xác nhận hành động?',
+                text: "Trạng thái của tài khoản này sẽ bị thay đổi!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/User/ToggleStatus/${id}`, { method: 'POST' });
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: data.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            loadUsers(); // Refresh lại bảng
+                        } else {
+                            Swal.fire('Thất bại', data.message, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi', 'Không thể kết nối với máy chủ', 'error');
+                    }
+                }
+            });
+        }
+    </script>
+}
