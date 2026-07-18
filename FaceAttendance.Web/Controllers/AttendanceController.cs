@@ -113,7 +113,7 @@ namespace FaceAttendance.Web.Controllers
     // ==========================================================
     public class ImageRequest
     {
-        public string Base64Image { get; set; } = string.Empty;
+        public string Base64Image { get; set; } = string.Empty; 
         public int ClassId { get; set; }
     }
 
