@@ -1,4 +1,3 @@
-// Đường dẫn: FaceAttendance.Web/Controllers/HomeController.cs
 using FaceAttendance.Web.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FaceAttendance.Web.Controllers
 {
-    [Authorize] // <--- DÒNG NÀY LÀ KHÓA CHẶT CONTROLLER
+    // BỔ SUNG ROLES: Chỉ Admin và Teacher mới được phép đi qua cánh cửa này
+    [Authorize(Roles = "Admin,Teacher")]
     public class HomeController : Controller
     {
         private readonly AppDbContext _context;

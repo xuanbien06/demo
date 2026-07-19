@@ -1,6 +1,9 @@
 ﻿using FaceAttendance.Web.DTOs;
 using FaceAttendance.Web.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Threading.Tasks;
 
 namespace FaceAttendance.Web.Controllers
 {
@@ -14,11 +17,11 @@ namespace FaceAttendance.Web.Controllers
         }
 
         // [GET] /Auth/Login
-        // Trả về file HTML/Razor chứa giao diện Login/Register
+        // Trả về file HTML/Razor chứa giao diện Login (Giao diện này sắp tới bạn cũng cần bỏ tab Đăng ký đi)
         [HttpGet]
         public IActionResult Login()
         {
-            // Nếu User đã đăng nhập rồi mà cố tình vào lại trang Login thì đẩy về Trang Chủ
+            // Nếu User đã đăng nhập rồi mà cố tình vào lại trang Login thì đẩy về Dashboard
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
@@ -27,23 +30,24 @@ namespace FaceAttendance.Web.Controllers
         }
 
         // [POST] /Auth/LoginApi
-        // API nhận dữ liệu AJAX từ giao diện
+        // API nhận dữ liệu từ form đăng nhập
         [HttpPost]
         public async Task<IActionResult> LoginApi([FromBody] LoginDTO model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new { success = false, message = "Dữ liệu nhập vào không hợp lệ!" });
 
+            // AuthService bây giờ chỉ phục vụ Admin và Giảng viên
             var token = await _authService.LoginAsync(model);
             if (token == null)
-                return Unauthorized(new { success = false, message = "Email hoặc mật khẩu không chính xác, hoặc tài khoản đã bị khóa." });
+                return Unauthorized(new { success = false, message = "Email hoặc mật khẩu không chính xác, hoặc tài khoản bị khóa." });
 
-            // Lưu JWT vào HttpOnly Cookie để bảo mật
+            // Bảo mật JWT bằng HttpOnly Cookie (Rất tốt, tiếp tục phát huy)
             var cookieOptions = new CookieOptions
             {
-                HttpOnly = true, // Chống XSS (Javascript không thể đọc được cookie này)
-                Secure = true, // Chỉ truyền qua HTTPS (Bảo mật đường truyền)
-                SameSite = SameSiteMode.Strict, // Chống CSRF (Chỉ gửi cookie khi request từ cùng 1 domain)
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
                 Expires = model.RememberMe ? DateTime.UtcNow.AddDays(7) : DateTime.UtcNow.AddDays(1)
             };
 
@@ -52,23 +56,8 @@ namespace FaceAttendance.Web.Controllers
             return Ok(new { success = true, message = "Đăng nhập thành công!", token });
         }
 
-        // [POST] /Auth/RegisterApi
-        // API đăng ký tài khoản
-        [HttpPost]
-        public async Task<IActionResult> RegisterApi([FromBody] RegisterDTO model)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new { success = false, message = "Dữ liệu đăng ký không hợp lệ!" });
-
-            var isSuccess = await _authService.RegisterAsync(model);
-            if (!isSuccess)
-                return BadRequest(new { success = false, message = "Email này đã được sử dụng!" });
-
-            return Ok(new { success = true, message = "Đăng ký thành công! Vui lòng đăng nhập." });
-        }
-
         // [POST] /Auth/Logout
-        // Xóa Cookie để đăng xuất
+        // Hủy session và cookie
         [HttpPost]
         public IActionResult Logout()
         {

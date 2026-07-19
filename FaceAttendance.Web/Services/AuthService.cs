@@ -25,46 +25,33 @@ namespace FaceAttendance.Web.Services
 
         public async Task<string?> LoginAsync(LoginDTO model)
         {
-            // 1. Tìm User theo Email
+            // 1. Tìm User theo Email, bắt buộc Include bảng Role
             var user = await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == model.Email);
 
-            // 2. Kiểm tra tồn tại và trạng thái hoạt động
-            if (user == null || !user.IsActive)
+            // 2. Kiểm tra tồn tại, trạng thái hoạt động và Role hợp lệ
+            if (user == null || !user.IsActive || user.Role == null)
                 return null;
 
-            // 3. Xác thực mật khẩu
+            // 3. CHẶN QUYỀN ĐĂNG NHẬP CỦA SINH VIÊN (RBAC ENFORCEMENT)
+            // Lấy tên Role chuyển về chữ thường để so sánh an toàn
+            var roleName = user.Role.Name.ToLower();
+            if (roleName == "student" || roleName == "sinh viên" || roleName == "sinhvien")
+            {
+                // Trả về null để Controller chặn lại (Không tiết lộ việc tài khoản tồn tại)
+                return null;
+            }
+
+            // 4. Xác thực mật khẩu
             if (!VerifyPassword(user, user.PasswordHash, model.Password))
                 return null;
 
-            // 4. Tạo và trả về JWT Token
+            // 5. Tạo và trả về JWT Token
             return GenerateJwtToken(user);
         }
 
-        public async Task<bool> RegisterAsync(RegisterDTO model)
-        {
-            // 1. Check xem Email đã bị đăng ký chưa
-            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
-                return false;
-
-            // 2. Tạo đối tượng User mới (Mặc định RoleId = 3 là Student)
-            var user = new User
-            {
-                FullName = model.FullName,
-                Email = model.Email,
-                RoleId = 3,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-
-            // 3. Hash Password trước khi lưu
-            user.PasswordHash = HashPassword(user, model.Password);
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return true;
-        }
+        // ĐÃ XÓA BỎ HÀM RegisterAsync ĐỂ ĐẢM BẢO BẢO MẬT HỆ THỐNG ENTERPRISE
 
         public string HashPassword(User user, string password)
         {
@@ -87,14 +74,22 @@ namespace FaceAttendance.Web.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Email, user.Email),
-                // Lấy tên Role, nếu rỗng thì lấy mặc định là Student
-                new Claim(ClaimTypes.Role, user.Role?.Name ?? "Student")
+                
+                // Lấy chính xác tên Role từ DB. Tuyệt đối KHÔNG fallback về "Student"
+                new Claim(ClaimTypes.Role, user.Role!.Name)
             };
+
+            // BỔ SUNG QUAN TRỌNG: Lưu Mã Giảng Viên (UserCode) vào Token
+            // Để sau này Giảng viên đăng nhập, ta biết họ là ai mà load đúng Lịch dạy của họ
+            if (!string.IsNullOrEmpty(user.UserCode))
+            {
+                claims.Add(new Claim("UserCode", user.UserCode));
+            }
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7), // Set token tồn tại trong 7 ngày
+                Expires = DateTime.UtcNow.AddDays(7), // Token tồn tại trong 7 ngày
                 Issuer = _config["Jwt:Issuer"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
             };

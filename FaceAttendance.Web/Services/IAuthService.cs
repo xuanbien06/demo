@@ -6,7 +6,6 @@ namespace FaceAttendance.Web.Services
     public interface IAuthService
     {
         Task<string?> LoginAsync(LoginDTO model);
-        Task<bool> RegisterAsync(RegisterDTO model);
         string HashPassword(User user, string password);
         bool VerifyPassword(User user, string hashedPassword, string providedPassword);
     }

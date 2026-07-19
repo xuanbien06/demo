@@ -17,6 +17,9 @@ namespace FaceAttendance.Web.DTOs
 
         [Required(ErrorMessage = "Vui lòng chọn quyền")]
         public int RoleId { get; set; }
+
+        // BỔ SUNG: Cho phép truyền UserCode từ giao diện
+        public string? UserCode { get; set; }
     }
 
     public class UserEditDTO
@@ -32,5 +35,8 @@ namespace FaceAttendance.Web.DTOs
 
         [Required(ErrorMessage = "Vui lòng chọn quyền")]
         public int RoleId { get; set; }
+
+        // BỔ SUNG: Cho phép cập nhật UserCode
+        public string? UserCode { get; set; }
     }
 }

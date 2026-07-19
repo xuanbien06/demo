@@ -9,7 +9,6 @@ using System.Security.Claims;
 
 namespace FaceAttendance.Web.Controllers
 {
-    // BẮT BUỘC: Chỉ có tài khoản mang Role "Admin" mới được phép gọi các API trong này
     [Authorize(Roles = "Admin")]
     public class UserController : Controller
     {
@@ -22,15 +21,12 @@ namespace FaceAttendance.Web.Controllers
             _authService = authService;
         }
 
-        // [GET] /User/Index -> Trả về giao diện HTML
         public async Task<IActionResult> Index()
         {
-            // Truyền danh sách Roles ra View để làm thẻ <select> khi tạo mới user
             ViewBag.Roles = await _context.Roles.ToListAsync();
             return View();
         }
 
-        // [GET] /User/GetAll -> API trả về dữ liệu JSON cho bảng
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -40,6 +36,7 @@ namespace FaceAttendance.Web.Controllers
                     u.Id,
                     u.FullName,
                     u.Email,
+                    u.UserCode, // BỔ SUNG: Trả về UserCode để hiển thị trên bảng
                     RoleName = u.Role != null ? u.Role.Name : "N/A",
                     u.RoleId,
                     u.IsActive
@@ -50,14 +47,12 @@ namespace FaceAttendance.Web.Controllers
             return Json(new { data = users });
         }
 
-        // [POST] /User/Create -> API Thêm mới
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] UserCreateDTO model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new { message = "Dữ liệu không hợp lệ!" });
 
-            // Kiểm tra trùng Email
             if (await _context.Users.AnyAsync(u => u.Email == model.Email))
                 return BadRequest(new { message = "Email này đã tồn tại trong hệ thống!" });
 
@@ -66,11 +61,11 @@ namespace FaceAttendance.Web.Controllers
                 FullName = model.FullName,
                 Email = model.Email,
                 RoleId = model.RoleId,
+                UserCode = model.UserCode, // BỔ SUNG: Lưu UserCode vào Database
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Băm mật khẩu an toàn
             user.PasswordHash = _authService.HashPassword(user, model.Password);
 
             _context.Users.Add(user);
@@ -78,7 +73,6 @@ namespace FaceAttendance.Web.Controllers
             return Ok(new { success = true, message = "Thêm người dùng thành công!" });
         }
 
-        // [POST] /User/Edit -> API Sửa thông tin
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] UserEditDTO model)
         {
@@ -89,13 +83,13 @@ namespace FaceAttendance.Web.Controllers
             if (user == null)
                 return NotFound(new { message = "Không tìm thấy người dùng!" });
 
-            // Kiểm tra trùng Email với người khác
             if (await _context.Users.AnyAsync(u => u.Email == model.Email && u.Id != model.Id))
                 return BadRequest(new { message = "Email này đã được sử dụng bởi tài khoản khác!" });
 
             user.FullName = model.FullName;
             user.Email = model.Email;
             user.RoleId = model.RoleId;
+            user.UserCode = model.UserCode; // BỔ SUNG: Cập nhật UserCode
             user.UpdatedAt = DateTime.UtcNow;
 
             _context.Users.Update(user);
@@ -103,7 +97,6 @@ namespace FaceAttendance.Web.Controllers
             return Ok(new { success = true, message = "Cập nhật thành công!" });
         }
 
-        // [POST] /User/ToggleStatus -> API Khóa / Mở khóa
         [HttpPost]
         public async Task<IActionResult> ToggleStatus(int id)
         {
@@ -111,12 +104,11 @@ namespace FaceAttendance.Web.Controllers
             if (user == null)
                 return NotFound(new { message = "Không tìm thấy người dùng!" });
 
-            // Ngăn chặn Admin tự khóa tài khoản của chính mình gây kẹt hệ thống
             var currentUserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (currentUserId == id.ToString())
                 return BadRequest(new { message = "Bạn không thể tự khóa tài khoản của chính mình!" });
 
-            user.IsActive = !user.IsActive; // Đảo ngược trạng thái
+            user.IsActive = !user.IsActive;
             await _context.SaveChangesAsync();
 
             var msg = user.IsActive ? "Đã MỞ KHÓA tài khoản!" : "Đã KHÓA tài khoản!";

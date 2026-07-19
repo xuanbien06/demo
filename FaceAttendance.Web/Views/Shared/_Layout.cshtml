@@ -10,8 +10,8 @@
 
     <style>
             /* =========================================
-                       GLOBAL & BACKGROUND
-                       ========================================= */
+                                   GLOBAL & BACKGROUND
+                                   ========================================= */
             body {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                 background-color: transparent;
@@ -49,8 +49,8 @@
             }
 
             /* =========================================
-                       SIDEBAR ANIMATION & DESIGN
-                       ========================================= */
+                                   SIDEBAR ANIMATION & DESIGN
+                                   ========================================= */
             .app-sidebar {
                 width: 280px;
                 background: rgba(255, 255, 255, 0.75);
@@ -236,8 +236,8 @@
             }
 
             /* =========================================
-                       MAIN CONTENT & HEADER
-                       ========================================= */
+                                   MAIN CONTENT & HEADER
+                                   ========================================= */
             .app-main {
                 flex-grow: 1;
                 height: 100vh;
@@ -315,9 +315,9 @@
 @using System.Security.Claims
 
 @{
-    // Trích xuất thông tin User từ JWT Token đang lưu trong Context
+    // Đã thay đổi giá trị mặc định Role từ "Student" thành "Khách" để triệt tiêu hoàn toàn quyền Sinh viên
     var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "Khách";
-    var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Student";
+    var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Khách";
 }
 
 <body>
@@ -386,17 +386,7 @@
                         </a>
                     }
 
-                    @if (userRole == "Student")
-                    {
-                        <a href="/Student/MyAttendance" class="sidebar-item">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                            <span>Lịch sử Điểm danh</span>
-                        </a>
-                        <a href="/LeaveRequest/Index" class="sidebar-item">
-                            <i class="fa-solid fa-envelope-open-text"></i>
-                            <span>Xin phép nghỉ</span>
-                        </a>
-                    }
+                    <!-- TOÀN BỘ KHỐI MENU CỦA STUDENT ĐÃ BỊ XÓA BỎ HOÀN TOÀN -->
                 </div>
             </aside>
 

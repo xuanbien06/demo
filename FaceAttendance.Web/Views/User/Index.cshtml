@@ -14,6 +14,7 @@
         <thead class="table-primary text-center">
             <tr>
                 <th>STT</th>
+                <th class="text-start">Mã Định Danh</th>
                 <th class="text-start">Họ Tên</th>
                 <th class="text-start">Email</th>
                 <th>Phân Quyền</th>
@@ -62,6 +63,13 @@
                             }
                         </select>
                     </div>
+
+                    <!-- BỔ SUNG: Khối nhập Mã Giảng Viên (Sẽ được JS tự động ẩn/hiện) -->
+                    <div class="mb-3" id="userCodeGroup" style="display: none;">
+                        <label class="form-label fw-semibold">Mã Giảng Viên</label>
+                        <input type="text" class="form-control bg-light" id="userCode" placeholder="Nhập mã giảng viên (VD: GV001)...">
+                        <small class="text-danger fst-italic">Bắt buộc nhập nếu phân quyền là Giảng viên.</small>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer bg-light border-0">
@@ -81,41 +89,57 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             document.body.appendChild(document.getElementById('userModal'));
-            // Khởi tạo Modal của Bootstrap
             userModal = new bootstrap.Modal(document.getElementById('userModal'));
-            loadUsers(); // Nạp dữ liệu ngay khi vào trang
+            loadUsers();
+
+            // BỔ SUNG LOGIC: Tự động hiện ô nhập Mã Giảng Viên nếu chọn Role Teacher
+            document.getElementById('roleId').addEventListener('change', toggleUserCodeField);
         });
 
-        // Hàm gọi API lấy danh sách User
+        function toggleUserCodeField() {
+            const roleSelect = document.getElementById('roleId');
+            const selectedText = roleSelect.options[roleSelect.selectedIndex].text.toLowerCase();
+            const userCodeGroup = document.getElementById('userCodeGroup');
+
+            // Nếu tên Role chứa chữ "teacher" hoặc "giảng viên"
+            if (selectedText.includes('teacher') || selectedText.includes('giảng viên') || selectedText.includes('gv')) {
+                userCodeGroup.style.display = 'block';
+            } else {
+                userCodeGroup.style.display = 'none';
+                document.getElementById('userCode').value = ''; // Xóa dữ liệu nếu đổi sang Role khác
+            }
+        }
+
         async function loadUsers() {
             try {
                 const response = await fetch('/User/GetAll');
                 const data = await response.json();
 
                 const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = ''; // Xóa sạch dữ liệu cũ
+                tbody.innerHTML = '';
 
                 data.data.forEach((user, index) => {
-                    // Xử lý huy hiệu Trạng thái
                     const statusBadge = user.isActive
                         ? `<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Hoạt động</span>`
                         : `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1">Đã khóa</span>`;
 
-                    // Xử lý màu sắc, icon nút Khóa
                     const lockIcon = user.isActive ? 'fa-lock' : 'fa-unlock';
                     const lockClass = user.isActive ? 'btn-outline-danger' : 'btn-outline-success';
                     const lockTitle = user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản';
 
-                    // Vẽ dòng HTML ngầm
+                    // Hiển thị UserCode, nếu null thì in chữ "N/A"
+                    const displayCode = user.userCode ? `<span class="fw-bold text-primary">${user.userCode}</span>` : `<span class="text-muted fst-italic">N/A</span>`;
+
                     const tr = `
                         <tr>
                             <td class="fw-bold text-muted">${index + 1}</td>
+                            <td class="text-start">${displayCode}</td>
                             <td class="fw-semibold text-dark text-start">${user.fullName}</td>
                             <td class="text-start">${user.email}</td>
                             <td><span class="badge bg-primary rounded-pill px-3">${user.roleName}</span></td>
                             <td>${statusBadge}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary me-2 shadow-sm" onclick="openEditModal(${user.id}, '${user.fullName}', '${user.email}', ${user.roleId})" title="Chỉnh sửa">
+                                <button class="btn btn-sm btn-outline-primary me-2 shadow-sm" onclick="openEditModal(${user.id}, '${user.fullName}', '${user.email}', ${user.roleId}, '${user.userCode || ''}')" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button class="btn btn-sm ${lockClass} shadow-sm" onclick="toggleStatus(${user.id})" title="${lockTitle}">
@@ -131,50 +155,55 @@
             }
         }
 
-        // Mở form Thêm mới
         function openCreateModal() {
             isEditMode = false;
             document.getElementById('userForm').reset();
             document.getElementById('userId').value = '';
             document.getElementById('modalTitle').innerText = 'Thêm Người Dùng Mới';
 
-            // Bắt buộc nhập mật khẩu khi tạo mới
             document.getElementById('passwordGroup').style.display = 'block';
             document.getElementById('password').required = true;
 
+            toggleUserCodeField(); // Gọi hàm để reset hiển thị ô UserCode
             userModal.show();
         }
 
-        // Mở form Cập nhật
-        function openEditModal(id, fullName, email, roleId) {
+        function openEditModal(id, fullName, email, roleId, userCode) {
             isEditMode = true;
             document.getElementById('userId').value = id;
             document.getElementById('fullName').value = fullName;
             document.getElementById('email').value = email;
             document.getElementById('roleId').value = roleId;
+            document.getElementById('userCode').value = userCode;
             document.getElementById('modalTitle').innerText = 'Chỉnh Sửa Thông Tin';
 
-            // Khi Edit không cho phép đổi password ở form này (Làm tính năng Reset Password riêng sau)
             document.getElementById('passwordGroup').style.display = 'none';
             document.getElementById('password').required = false;
 
+            toggleUserCodeField(); // Gọi hàm để kiểm tra xem có nên hiện ô UserCode không
             userModal.show();
         }
 
-        // Lưu dữ liệu (Gọi API POST)
         async function saveUser() {
-            // Validate form cơ bản
             const form = document.getElementById('userForm');
             if (!form.reportValidity()) return;
+
+            // Ràng buộc JS: Bắt buộc nhập UserCode nếu đang hiện
+            const userCodeGroup = document.getElementById('userCodeGroup');
+            const userCodeInput = document.getElementById('userCode').value.trim();
+            if (userCodeGroup.style.display === 'block' && userCodeInput === '') {
+                Swal.fire('Cảnh báo', 'Vui lòng nhập Mã Giảng Viên!', 'warning');
+                return;
+            }
 
             const url = isEditMode ? '/User/Edit' : '/User/Create';
             const payload = {
                 fullName: document.getElementById('fullName').value,
                 email: document.getElementById('email').value,
-                roleId: parseInt(document.getElementById('roleId').value)
+                roleId: parseInt(document.getElementById('roleId').value),
+                userCode: userCodeInput || null
             };
 
-            // Gắn thêm ID hoặc Password tùy theo chế độ
             if (isEditMode) {
                 payload.id = parseInt(document.getElementById('userId').value);
             } else {
@@ -198,8 +227,8 @@
                         timer: 1500,
                         showConfirmButton: false
                     });
-                    userModal.hide(); // Đóng Modal
-                    loadUsers(); // Load lại bảng ngầm mà không giật trang
+                    userModal.hide();
+                    loadUsers();
                 } else {
                     Swal.fire('Lỗi!', data.message, 'error');
                 }
@@ -208,7 +237,6 @@
             }
         }
 
-        // Thay đổi trạng thái Khóa / Mở Khóa
         function toggleStatus(id) {
             Swal.fire({
                 title: 'Xác nhận hành động?',
@@ -233,7 +261,7 @@
                                 timer: 1500,
                                 showConfirmButton: false
                             });
-                            loadUsers(); // Refresh lại bảng
+                            loadUsers();
                         } else {
                             Swal.fire('Thất bại', data.message, 'error');
                         }

@@ -1,15 +1,19 @@
 ﻿using FaceAttendance.Web.Data;
 using FaceAttendance.Web.Models;
 using FaceAttendance.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace FaceAttendance.Web.Controllers
 {
+    // KHÓA CHẶT: Chỉ Admin và Teacher mới được vào trang Điểm danh Camera
+    [Authorize(Roles = "Admin,Teacher")]
     public class AttendanceController : Controller
     {
         private readonly IAttendanceService _attendanceService;
@@ -21,11 +25,39 @@ namespace FaceAttendance.Web.Controllers
             _context = context;
         }
 
-        // 1. Giao diện mở Camera điểm danh
+        // 1. Giao diện mở Camera điểm danh (ĐÃ NÂNG CẤP LỌC LỚP HỌC)
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var classes = await _context.Classes.OrderByDescending(c => c.CreatedAt).ToListAsync();
+            // Trích xuất thông tin người đang đăng nhập từ JWT
+            var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            var userIdString = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            int userId = 0;
+            if (!string.IsNullOrEmpty(userIdString))
+            {
+                int.TryParse(userIdString, out userId);
+            }
+
+            List<ClassRoom> classes = new List<ClassRoom>();
+
+            // LOGIC PHÂN QUYỀN THÔNG MINH
+            if (userRole == "Admin")
+            {
+                // Nếu là Admin: Bê nguyên toàn bộ lớp học trong trường ra
+                classes = await _context.Classes
+                    .OrderByDescending(c => c.CreatedAt)
+                    .ToListAsync();
+            }
+            else
+            {
+                // Nếu là Giảng viên: Chỉ bốc đúng những lớp có TeacherId trùng với Id của mình
+                classes = await _context.Classes
+                    .Where(c => c.TeacherId == userId)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .ToListAsync();
+            }
+
             return View(classes);
         }
 
@@ -92,7 +124,7 @@ namespace FaceAttendance.Web.Controllers
             return Json(new { success = true, sessionId = session.SessionID });
         }
 
-        // 4. CHÍNH LÀ HÀM NÀY NAY ĐÃ ĐƯỢC ĐẶT ĐÚNG VỊ TRÍ
+        // 4. API Xem kết quả điểm danh
         [HttpGet]
         public async Task<IActionResult> Result(int id)
         {
@@ -113,7 +145,7 @@ namespace FaceAttendance.Web.Controllers
     // ==========================================================
     public class ImageRequest
     {
-        public string Base64Image { get; set; } = string.Empty; 
+        public string Base64Image { get; set; } = string.Empty;
         public int ClassId { get; set; }
     }
 

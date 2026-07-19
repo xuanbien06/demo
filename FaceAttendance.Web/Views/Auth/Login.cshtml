@@ -1,7 +1,6 @@
 ﻿@{
     Layout = null; // Tắt layout mặc định vì trang đăng nhập đứng độc lập
 }
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -16,35 +15,10 @@
 </head>
 <body>
     <div class="container-auth" id="container">
-        <div class="form-container sign-up-container">
-            <form id="registerForm">
-                <h1>Tạo Tài Khoản</h1>
-                <span class="sub-text">Sử dụng email của bạn để đăng ký</span>
-
-                <input type="text" id="regFullName" placeholder="Họ và tên" required />
-                <input type="email" id="regEmail" placeholder="Email" required />
-
-                <div class="password-wrapper">
-                    <input type="password" id="regPassword" placeholder="Mật khẩu (Từ 6 ký tự)" required minlength="6" />
-                    <i class="fa-solid fa-eye toggle-password" data-target="regPassword"></i>
-                </div>
-
-                <div class="password-wrapper">
-                    <input type="password" id="regConfirmPassword" placeholder="Xác nhận mật khẩu" required />
-                    <i class="fa-solid fa-eye toggle-password" data-target="regConfirmPassword"></i>
-                </div>
-
-                <button type="submit" id="btnRegister">
-                    <span class="btn-text">Đăng Ký</span>
-                    <i class="fa-solid fa-spinner fa-spin d-none loading-icon"></i>
-                </button>
-            </form>
-        </div>
-
-        <div class="form-container sign-in-container">
+        <div class="form-container sign-in-container" style="width: 50%; left: 0;">
             <form id="loginForm">
                 <h1>Đăng Nhập</h1>
-                <span class="sub-text">Sử dụng tài khoản của bạn</span>
+                <span class="sub-text">Hệ thống dành cho Giảng viên & Ban Quản trị</span>
 
                 <input type="email" id="loginEmail" placeholder="Email" required />
 
@@ -67,23 +41,106 @@
             </form>
         </div>
 
-        <div class="overlay-container">
-            <div class="overlay">
-                <div class="overlay-panel overlay-left">
-                    <h1>Chào mừng trở lại!</h1>
-                    <p>Để giữ kết nối, vui lòng đăng nhập bằng thông tin cá nhân của bạn</p>
-                    <button class="ghost" id="signIn">Đăng Nhập</button>
-                </div>
-                <div class="overlay-panel overlay-right">
-                    <h1>Chào bạn!</h1>
-                    <p>Nhập thông tin cá nhân của bạn và bắt đầu hành trình với hệ thống AI</p>
-                    <button class="ghost" id="signUp">Đăng Ký</button>
+        <div class="overlay-container" style="width: 50%; left: 50%;">
+            <div class="overlay" style="transform: translateX(0);">
+                <div class="overlay-panel overlay-right" style="transform: translateX(0);">
+                    <h1>LXB SmartEdu</h1>
+                    <p>Hệ thống Điểm danh Khuôn mặt AI</p>
+                    <p style="font-size: 14px; margin-top: 15px; font-weight: normal;">
+                        Vui lòng đăng nhập bằng tài khoản được cấp để truy cập hệ thống.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/auth.js"></script>
+
+    <!-- NHÚNG TRỰC TIẾP JAVASCRIPT ĐỂ CHỐNG LỖI CACHE TRÌNH DUYỆT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        const loginForm = document.getElementById('loginForm');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnText = btnLogin.querySelector('.btn-text');
+        const loadingIcon = btnLogin.querySelector('.loading-icon');
+
+        // Xử lý nút ẩn/hiện mật khẩu
+        const togglePasswords = document.querySelectorAll('.toggle-password');
+        togglePasswords.forEach(icon => {
+        icon.addEventListener('click', function () {
+        const targetId = this.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (input && input.type === 'password') {
+        input.type = 'text';
+        this.classList.remove('fa-eye');
+        this.classList.add('fa-eye-slash');
+        } else if (input) {
+        input.type = 'password';
+        this.classList.remove('fa-eye-slash');
+        this.classList.add('fa-eye');
+        }
+        });
+        });
+
+        // Xử lý API Đăng nhập
+        if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+        // LỆNH QUAN TRỌNG: Chặn load lại trang
+        e.preventDefault();
+
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+
+        // Bật hiệu ứng loading
+        btnLogin.disabled = true;
+        btnText.classList.add('d-none');
+        loadingIcon.classList.remove('d-none');
+
+        try {
+        const response = await fetch('/Auth/LoginApi', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password, rememberMe })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+        Swal.fire({
+        icon: 'success',
+        title: 'Đăng nhập thành công!',
+        text: 'Đang chuyển hướng...',
+        timer: 1500,
+        showConfirmButton: false
+        }).then(() => {
+        window.location.href = '/Home/Index'; // Chuyển vào Dashboard
+        });
+        } else {
+        // Báo lỗi sai mật khẩu hoặc tài khoản Sinh viên bị chặn
+        Swal.fire({
+        icon: 'error',
+        title: 'Thất bại',
+        text: data.message
+        });
+        }
+        } catch (error) {
+        Swal.fire({
+        icon: 'error',
+        title: 'Lỗi hệ thống',
+        text: 'Không thể kết nối đến máy chủ.'
+        });
+        } finally {
+        // Tắt hiệu ứng loading
+        btnLogin.disabled = false;
+        btnText.classList.remove('d-none');
+        loadingIcon.classList.add('d-none');
+        }
+        });
+        }
+        });
+    </script>
 </body>
 </html>
