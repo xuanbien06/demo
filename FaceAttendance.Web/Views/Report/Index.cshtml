@@ -1,0 +1,130 @@
+﻿@{
+    ViewData["Title"] = "Báo cáo Điểm danh";
+}
+
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-chart-pie me-2"></i>Thống kê Điểm danh</h4>
+        <p class="text-muted small mb-0">Theo dõi tỷ lệ chuyên cần của sinh viên theo từng lớp học</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="d-flex justify-content-md-end align-items-center gap-2">
+            <label class="fw-semibold text-dark text-nowrap">Chọn Lớp:</label>
+            <select class="form-select shadow-sm border-primary" id="classSelector" style="max-width: 300px;" onchange="loadReport()">
+                <option value="">-- Vui lòng chọn lớp học --</option>
+                @foreach (var c in ViewBag.Classes)
+                {
+                    <option value="@c.ClassID">@c.ClassName</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- KHỐI KẾT QUẢ BÁO CÁO -->
+<div id="reportContainer" style="display: none;">
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success shadow-sm" onclick="exportToExcel()">
+            <i class="fa-solid fa-file-excel me-2"></i>Xuất Excel
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <!-- Đặt id cho table để hàm JS bốc dữ liệu ra Excel -->
+        <table class="table table-hover align-middle shadow-sm bg-white rounded overflow-hidden" id="reportTable">
+            <thead class="table-primary text-center">
+                <tr>
+                    <th>STT</th>
+                    <th class="text-start">Mã SV</th>
+                    <th class="text-start">Họ và Tên</th>
+                    <th>Tổng số buổi</th>
+                    <th class="text-success">Có mặt</th>
+                    <th class="text-danger">Vắng mặt</th>
+                    <th>Tỷ lệ chuyên cần</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody" class="text-center">
+                <!-- Dữ liệu sẽ được JS đổ vào đây -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- KHỐI TRỐNG KHI CHƯA CHỌN LỚP -->
+<div id="emptyContainer" class="text-center py-5 text-muted">
+    <i class="fa-solid fa-folder-open display-1 mb-3 opacity-25"></i>
+    <h5>Chưa có dữ liệu</h5>
+    <p>Vui lòng chọn một lớp học ở góc trên để xem báo cáo.</p>
+</div>
+
+
+@section Scripts {
+    <!-- Thư viện SheetJS dùng để bốc HTML Table thành file Excel siêu nhanh -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        async function loadReport() {
+        const classId = document.getElementById('classSelector').value;
+        const reportContainer = document.getElementById('reportContainer');
+        const emptyContainer = document.getElementById('emptyContainer');
+        const tbody = document.getElementById('tableBody');
+
+        if (!classId) {
+        reportContainer.style.display = 'none';
+        emptyContainer.style.display = 'block';
+        return;
+        }
+
+        try {
+        // Gọi API lấy số liệu đã tính toán
+        const response = await fetch(`/Report/GetClassReport?classId=${classId}`);
+        const data = await response.json();
+
+        tbody.innerHTML = '';
+
+        if(data.data.length === 0){
+        tbody.innerHTML = '<tr><td colspan="7" class="text-muted fst-italic py-4">Lớp này chưa có sinh viên hoặc chưa điểm danh buổi nào.</td></tr>';
+        }
+
+        data.data.forEach((student, index) => {
+        // Tô màu đỏ nếu nghỉ quá 20% (chuyên cần dưới 80%)
+        const rateColor = student.attendanceRate >= 80 ? 'text-success fw-bold' : 'text-danger fw-bold';
+
+        const tr = `
+        <tr>
+        <td class="text-muted fw-bold">${index + 1}</td>
+        <td class="text-start fw-bold text-primary">${student.studentID}</td>
+        <td class="text-start fw-semibold">${student.fullName}</td>
+        <td>${student.totalSessions}</td>
+        <td class="text-success fw-bold">${student.presentCount}</td>
+        <td class="text-danger fw-bold">${student.absentCount}</td>
+        <td class="${rateColor}">${student.attendanceRate}%</td>
+        </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', tr);
+        });
+
+        reportContainer.style.display = 'block';
+        emptyContainer.style.display = 'none';
+
+        } catch (error) {
+        Swal.fire('Lỗi', 'Không thể tải báo cáo từ máy chủ.', 'error');
+        }
+        }
+
+        // Hàm xuất Excel sử dụng thư viện XLSX
+        function exportToExcel() {
+        const table = document.getElementById("reportTable");
+        const select = document.getElementById('classSelector');
+        const className = select.options[select.selectedIndex].text;
+
+        // Lấy dữ liệu từ Table bọc thành Workbook
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Bao_Cao" });
+
+        // Đặt tên file có chứa tên lớp
+        const fileName = `Bao_Cao_Diem_Danh_${className.replace(/\s+/g, '_')}.xlsx`;
+
+        // Tự động tải xuống
+        XLSX.writeFile(wb, fileName);
+        }
+    </script>
+}
