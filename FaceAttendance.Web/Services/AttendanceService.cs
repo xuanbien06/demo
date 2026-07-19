@@ -12,13 +12,12 @@ namespace FaceAttendance.Web.Services
     public class AttendanceService : IAttendanceService
     {
         private readonly FaceRecognitionService _faceApi;
-        private readonly FaceCacheService _faceCache;
-        private readonly AppDbContext _context; // Dùng để truy vấn Database
+        private readonly AppDbContext _context;
 
-        public AttendanceService(FaceRecognitionService faceApi, FaceCacheService faceCache, AppDbContext context)
+        // Đã gỡ bỏ hoàn toàn FaceCacheService vì C# không cần tự tính toán Vector nữa
+        public AttendanceService(FaceRecognitionService faceApi, AppDbContext context)
         {
             _faceApi = faceApi;
-            _faceCache = faceCache;
             _context = context;
         }
 
@@ -35,35 +34,30 @@ namespace FaceAttendance.Web.Services
                 ContentType = "image/jpeg"
             };
 
-            // 2. Nhận kết quả Bounding Box và Vector từ AI
+            // 2. Nhận kết quả Bounding Box và Tên (Mã SV) thẳng từ AI
             var aiFaces = await _faceApi.GetFaceEmbeddingAsync(formFile);
 
-            // 3. Lấy danh sách ID sinh viên CHỈ THUỘC LỚP ĐANG CHỌN (Yêu cầu 8)
+            // 3. Lấy danh sách ID sinh viên CHỈ THUỘC LỚP ĐANG CHỌN
             var studentIdsInClass = await _context.ClassStudents
                 .Where(cs => cs.ClassID == classId)
                 .Select(cs => cs.StudentID)
                 .ToListAsync();
 
-            // 4. So khớp khuôn mặt
-            foreach (var (box, vector) in aiFaces)
+            // 4. Xử lý nghiệp vụ điểm danh dựa trên quyết định của AI
+            foreach (var (box, name) in aiFaces)
             {
-                var (bestMatchId, distance) = _faceCache.FindBestMatch(vector);
-
-                // Tính % tự tin cho đẹp
-                double percent = Math.Round(Math.Max(0, 1 - distance) * 100, 2);
-
-                if (bestMatchId != null && distance < 0.6) // Ngưỡng 0.6 của FaceNet
+                if (name != "Unknown")
                 {
-                    // KIỂM TRA BẢO MẬT: Sinh viên này có học lớp hiện tại không?
-                    if (studentIdsInClass.Contains(bestMatchId))
+                    // AI đã nhận ra người này. Kiểm tra xem có học lớp này không?
+                    if (studentIdsInClass.Contains(name))
                     {
-                        var student = await _context.Students.FindAsync(bestMatchId);
+                        var student = await _context.Students.FindAsync(name);
                         resultList.Add(new FaceResultResponse
                         {
                             Box = box,
-                            StudentId = student?.StudentID, // <-- BỔ SUNG DÒNG NÀY
-                            StudentName = student?.FullName ?? "Unknown",
-                            Percent = percent,
+                            StudentId = name,
+                            StudentName = student?.FullName ?? name,
+                            Percent = 99.9, // Gán cứng độ tự tin vì AI đã chốt kết quả
                             Success = true
                         });
                     }
@@ -74,14 +68,14 @@ namespace FaceAttendance.Web.Services
                         {
                             Box = box,
                             StudentName = "Unknown (Sai lớp)",
-                            Percent = percent,
-                            Success = false // Bật cờ false để vẽ khung đỏ
+                            Percent = 0,
+                            Success = false
                         });
                     }
                 }
                 else
                 {
-                    // Người hoàn toàn lạ (Không có trong hệ thống)
+                    // AI Python trả về Unknown (Người lạ)
                     resultList.Add(new FaceResultResponse
                     {
                         Box = box,

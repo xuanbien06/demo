@@ -1,7 +1,9 @@
-﻿// Đường dẫn: FaceAttendance.Web/Services/FaceRecognitionService.cs
-using System.Text.Json;
-using System.Linq;             // <-- THÊM DÒNG NÀY ĐỂ SỬA LỖI ĐỎ SELECT/TOARRAY
-using Microsoft.AspNetCore.Http; // <-- THÊM DÒNG NÀY ĐỂ NHẬN DIỆN IFormFile
+﻿using System.Text.Json;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace FaceAttendance.Web.Services
 {
@@ -14,8 +16,8 @@ namespace FaceAttendance.Web.Services
             _httpClient = httpClient;
         }
 
-        // Đổi kiểu trả về: Hỗ trợ nhiều khuôn mặt, mỗi khuôn mặt có [Tọa độ Box, Vector]
-        public async Task<List<(int[] Box, List<float> Vector)>> GetFaceEmbeddingAsync(IFormFile imageFile)
+        // ĐỔI KIẾN TRÚC: Trả về string Name thay vì List<float> Vector
+        public async Task<List<(int[] Box, string Name)>> GetFaceEmbeddingAsync(IFormFile imageFile)
         {
             using var content = new MultipartFormDataContent();
             using var stream = imageFile.OpenReadStream();
@@ -27,14 +29,14 @@ namespace FaceAttendance.Web.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                return new List<(int[], List<float>)>(); // Không tìm thấy mặt thì trả về list rỗng
+                return new List<(int[], string)>(); // Trả về list rỗng nếu lỗi
             }
 
             var jsonResponse = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(jsonResponse);
             var root = document.RootElement;
 
-            var resultList = new List<(int[] Box, List<float> Vector)>();
+            var resultList = new List<(int[] Box, string Name)>();
 
             if (root.GetProperty("status").GetString() == "success")
             {
@@ -45,10 +47,10 @@ namespace FaceAttendance.Web.Services
                     // Lấy Bounding Box [x, y, w, h]
                     var boxArray = face.GetProperty("box").EnumerateArray().Select(x => x.GetInt32()).ToArray();
 
-                    // Lấy Vector
-                    var vectorArray = face.GetProperty("vector").EnumerateArray().Select(x => (float)x.GetDouble()).ToList();
+                    // Lấy trực tiếp Tên (Mã SV) do AI Python quyết định
+                    var name = face.GetProperty("name").GetString();
 
-                    resultList.Add((boxArray, vectorArray));
+                    resultList.Add((boxArray, name));
                 }
             }
 

@@ -1,116 +1,101 @@
-# Đường dẫn: D:\DoAnTotNghiep\FaceAttendance.AI\api.py
-
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
+import os
+import shutil
 import cv2
 import numpy as np
-from keras_facenet import FaceNet
-import os
-import urllib.request
+import face_recognition
 
-app = FastAPI(title="Face Recognition API Realtime (YuNet)")
+# Import AI Engine vừa tạo
+from core.face_engine import face_engine 
 
-# 1. Hàm tự động tải Model YuNet của OpenCV (Siêu mượt, bắt góc nghiêng cực tốt)
-def load_yunet_model():
-    model_dir = "dnn_model"
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+app = FastAPI(title="Face Attendance AI API")
+
+# 1. Nạp Dataset vào RAM ngay khi Server khởi động
+@app.on_event("startup")
+async def startup_event():
+    face_engine.load_and_encode_dataset()
+
+# 2. API Upload ảnh sinh viên vào Dataset
+@app.post("/api/v1/dataset/upload")
+async def upload_student_face(student_id: str = Form(...), file: UploadFile = File(...)):
+    # Bước 1: Tạo thư mục cho sinh viên nếu chưa có
+    student_dir = os.path.join(face_engine.dataset_path, student_id)
+    if not os.path.exists(student_dir):
+        os.makedirs(student_dir)
         
-    model_url = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2026may.onnx"
-    model_path = os.path.join(model_dir, "face_detection_yunet_2026may.onnx")
+    file_path = os.path.join(student_dir, file.filename)
     
-    if not os.path.exists(model_path):
-        print("Đang tải file AI YuNet (1.5MB)... Vui lòng đợi...")
-        urllib.request.urlretrieve(model_url, model_path)
+    # Bước 2: Lưu file ảnh vào ổ cứng
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể lưu file: {str(e)}")
         
-    # Khởi tạo thuật toán YuNet
-    face_detector = cv2.FaceDetectorYN.create(
-        model=model_path,
-        config="",
-        input_size=(320, 320), # Sẽ cập nhật lại theo từng frame ảnh ở bên dưới
-        score_threshold=0.8,   # Chỉ lấy mặt có độ tin cậy > 80%
-        nms_threshold=0.3,
-        top_k=5000,
-        backend_id=cv2.dnn.DNN_BACKEND_OPENCV,
-        target_id=cv2.dnn.DNN_TARGET_CPU
-    )
-    return face_detector
+    # Bước 3: Sau khi lưu file thành công, BẮT BUỘC phải reload lại bộ nhớ AI
+    try:
+        face_engine.load_and_encode_dataset()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lưu ảnh thành công nhưng lỗi khi train AI: {str(e)}")
+        
+    return JSONResponse(content={
+        "status": "success",
+        "message": f"Đã thêm ảnh cho sinh viên {student_id} và cập nhật AI thành công."
+    }, status_code=200)
 
-# 2. Khởi tạo Model (Chỉ load 1 lần)
-embedder = FaceNet()
-face_detector = load_yunet_model()
+# 3. API thủ công để Admin ép AI học lại toàn bộ
+@app.post("/api/v1/dataset/retrain")
+async def retrain_ai_model():
+    try:
+        face_engine.load_and_encode_dataset()
+        return JSONResponse(content={
+            "status": "success",
+            "message": "Đã huấn luyện lại (reload) AI Model thành công."
+        }, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi huấn luyện lại AI: {str(e)}")
 
+# =====================================================================
+# PHẦN CODE MỚI BỔ SUNG: API xử lý Frame Camera từ Frontend
+# =====================================================================
 @app.post("/api/extract-face")
 async def extract_face(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if img is None:
-            return JSONResponse(status_code=400, content={"status": "error", "message": "File không hợp lệ"})
-            
-        h_orig, w_orig = img.shape[:2]
-        
-        # Resize để xử lý nhanh
-        max_width = 640
-        if w_orig > max_width:
-            ratio = max_width / w_orig
-            img = cv2.resize(img, (max_width, int(h_orig * ratio)))
-            
-        h, w = img.shape[:2]
-        
-        # 3. Đưa kích thước ảnh vào YuNet và nhận diện
-        face_detector.setInputSize((w, h))
-        _, faces = face_detector.detect(img)
-        
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Không thể đọc frame camera"})
+
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # AI thực hiện nhận diện và đưa ra kết quả cuối cùng
+        face_locations, face_names = face_engine.recognize_face(rgb_frame)
+
         faces_data = []
-        
-        # 4. Trích xuất dữ liệu khuôn mặt
-        if faces is not None:
-            for face in faces:
-                # YuNet trả về box ở 4 index đầu tiên: [x, y, width, height]
-                box = face[0:4].astype(int)
-                x, y, box_w, box_h = box
-                
-                # Fix lỗi tọa độ tràn viền
-                x, y = max(0, x), max(0, y)
-                x1 = min(w, x + box_w)
-                y1 = min(h, y + box_h)
-                box_w = x1 - x
-                box_h = y1 - y
-                
-                if box_w <= 0 or box_h <= 0:
-                    continue
-                    
-                face_crop = img[y:y+box_h, x:x+box_w]
-                if face_crop.size == 0:
-                    continue
-                    
-                # Ép kiểu cho FaceNet
-                face_crop_rgb = cv2.cvtColor(face_crop, cv2.COLOR_BGR2RGB)
-                face_crop_rgb = cv2.resize(face_crop_rgb, (160, 160))
-                face_crop_rgb = np.expand_dims(face_crop_rgb, axis=0)
-                
-                embeddings = embedder.embeddings(face_crop_rgb)
-                vector_list = embeddings[0].tolist()
-                
-                # Trả tọa độ về scale gốc
-                scale = w_orig / w
-                orig_x = int(x * scale)
-                orig_y = int(y * scale)
-                orig_bw = int(box_w * scale)
-                orig_bh = int(box_h * scale)
-                
-                faces_data.append({
-                    "box": [orig_x, orig_y, orig_bw, orig_bh],
-                    "vector": vector_list
-                })
-                
-        if not faces_data:
-            return JSONResponse(status_code=400, content={"status": "error", "message": "Không tìm thấy khuôn mặt nào"})
+        for i in range(len(face_locations)):
+            top, right, bottom, left = face_locations[i]
             
-        return {"status": "success", "faces": faces_data}
-        
+            # Tọa độ chuẩn C#
+            x = left
+            y = top
+            w = right - left
+            h = bottom - top
+            
+            face_info = {
+                "box": [x, y, w, h], 
+                "name": face_names[i] # DỊCH CHUYỂN KIẾN TRÚC: Trả thẳng Tên/Mã SV cho C#
+            }
+            faces_data.append(face_info)
+
+        print(f"AI Debug: Đã gửi cho C# danh sách -> {face_names}")
+
+        return JSONResponse(content={
+            "status": "success",
+            "faces": faces_data
+        }, status_code=200)
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
